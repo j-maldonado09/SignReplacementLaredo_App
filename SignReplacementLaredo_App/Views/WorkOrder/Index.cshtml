@@ -1,0 +1,764 @@
+﻿@using SignReplacementLaredo;
+@using SignReplacementLaredo.ViewModels;
+@using SignReplacementLaredo_App.Models;
+@using Microsoft.AspNetCore.Identity;
+@addTagHelper *, Kendo.Mvc
+@model IEnumerable<WorkOrderViewModel>
+@inject UserManager<ApplicationUser> userManager;
+
+@* Global variables ***************************************************************************************************************************@
+@{
+    var currentUser = await userManager.GetUserAsync(User);
+    var roles = userManager.GetRolesAsync(currentUser).Result;
+    string currentUserRole = roles[0];
+}
+
+@* Page title *******************************************************************************************************************************@
+<br />
+<h1>
+    Dashboard - Laredo Sign Replacement
+</h1>
+<br />
+
+@* Block for Grid *******************************************************************************************************************************@
+<kendo-grid name="workOrderGrid" on-edit="onEdit" on-cancel="onPopupClose" on-data-bound="onWorkOrderDataBound" height="750">
+    <datasource type="DataSourceTagHelperType.Ajax" page-size="20" server-operation="true" on-error="fnShowError">
+        <transport>
+            <read url="/WorkOrder/Read" />
+            <destroy url="/WorkOrder/Delete" />
+        </transport>
+        <schema>
+            <model id="Id">
+                <fields>
+                    <field name="Id" type="number" editable="false"></field>
+                    <field name="Number" type="String"></field>
+                    <field name="MaterialRequestedFromId" type="number" editable="false"></field>
+                    <field name="MaterialRequestedFromName" type="String"></field>
+                    <field name="MaterialRequestedById" type="number" editable="false"></field>
+                    <field name="MaterialRequestedByName" type="String"></field>
+                    <field name="Status" type="String"></field>
+                    <field name="StatusDate" type="Date"></field>
+                </fields>
+            </model>
+        </schema>
+    </datasource>
+    <editable mode="popup" template-id="popup-editor" />
+    <groupable enabled="true" />
+    <sortable enabled="true" />
+    <filterable enabled="true" />
+    <pageable button-count="5" refresh="true" page-sizes="new int[] { 5, 10, 20 }">
+    </pageable>
+    <toolbar>
+        <toolbar-button name="create" text="New Sign Request"></toolbar-button>
+    </toolbar>
+    @* @{
+        if (currentUserRole == "USER")
+        {
+            <toolbar>
+                <toolbar-button name="create" text="New Sign Request"></toolbar-button>
+            </toolbar>
+        }
+    } *@
+    <columns>
+        <column field="Id" title="Id" hidden=true />
+        <column field="Number" template="#=template(data)#" title="Number" width="180" />
+        <column field="MaterialRequestedFromId" title="Requested From" hidden=true />
+        <column field="MaterialRequestedFromName" title="Requested From" width="180" />
+        <column field="MaterialRequestedById" title="Requested By" hidden=true />
+        <column field="MaterialRequestedByName" title="Maintenance Section" />
+        <column name="statusColumn" field="Status" title="Status" width="250" />
+        <column field="StatusDate" title="Last Updated" format="{0:yyyy/MM/dd}" width="180" />
+        <column width="110">
+            <commands>
+                <column-command text=" " name="edit"></column-command>
+                <column-command text=" " name="destroy"></column-command>
+            </commands>
+        </column>
+    </columns>
+</kendo-grid>
+
+@* ***************************************************************************************************** *@
+@* Container for dialog window used to display success and error messages *@
+@* and definition of window to display sign image *@
+@* ***************************************************************************************************** *@
+
+<kendo-dialog id="messageDialog" width="400" visible="false">
+    <content></content>
+</kendo-dialog>
+
+<kendo-window id="imageWindow" name="imageWindow"
+    title=""
+    width="20%"
+    height="auto"
+    visible="false"
+    draggable="false"
+    resizable="false"
+    modal="true"
+    position-top="10%">
+</kendo-window>
+
+@* *********************************************************************************************************** *@
+@* Block for Javascript code  *@
+@* *********************************************************************************************************** *@
+
+<script>
+
+    // variables *********************************************************************************
+    var cloneCount = 0;
+    var workOrderId = 0;
+    var isNew;
+    var closePopup = false;
+
+    // Sets that the popup will be closed. Used by grid's on-close event ***********************************
+    function onPopupClose(e) {
+        closePopup = true;
+        RefreshGrid();
+        //onWorkOrderDataBound(e);
+    }
+
+    // Set the work order number by merging the maintenance section number and the work order id *****************
+    function template(data) {
+        return `<div> ${data.MaterialRequestedByNumber}-${data.Id} <div/>`
+    }
+
+    // Set template for 'Status' column in work order grid ********************************************
+    function onWorkOrderDataBound(e) {
+        var grid = this;
+        grid.table.find("tr").each(function () {
+            var dataItem = grid.dataItem(grid);
+
+            $("td:contains('CREATED')").addClass("status-css-created");
+            $("td:contains('REQUESTED')").addClass("status-css-requested");
+            $("td:contains('APPROVED')").addClass("status-css-approved");
+            $("td:contains('RECEIVED')").addClass("status-css-received");
+            $("td:contains('INSTALLED')").addClass("status-css-installed");
+
+            // Check if edit button will be disabled
+            // Column 6 is for status and column 8 is for edit and delete buttons
+            if (this.cells.item(6).innerHTML == "CREATED") {
+                if ("@currentUserRole" == "ADMIN")
+                    this.cells.item(8).getElementsByClassName("k-grid-edit-command")[0].setAttribute("disabled", true);
+            }
+            else if (this.cells.item(6).innerHTML == "REQUESTED") {
+                if ("@currentUserRole" == "USER" || "@currentUserRole" == "SUPERVISOR")
+                    this.cells.item(8).getElementsByClassName("k-grid-edit-command")[0].setAttribute("disabled", true);
+            }
+            // else if (this.cells.item(6).innerHTML == "APPROVED") {
+            //     if ("@currentUserRole" == "USER" || "@currentUserRole" == "SUPERVISOR")
+            //         this.cells.item(8).getElementsByClassName("k-grid-edit-command")[0].setAttribute("disabled", true);
+            // }
+            // else if (this.cells.item(6).innerHTML == "RECEIVED" || this.cells.item(6).innerHTML == "INSTALLED") {
+            //     if ("@currentUserRole" == "USER" || "@currentUserRole" == "SUPERVISOR")
+            //         this.cells.item(8).getElementsByClassName("k-grid-edit-command")[0].setAttribute("disabled", true);
+            // }
+                
+            // Check if delete button will be disabled
+            if ("@currentUserRole" == "USER" || "@currentUserRole" == "SUPERVISOR")
+                    $(".k-grid-remove-command").attr("disabled", true);
+            
+            kendo.bind(grid, dataItem);
+        });
+    }
+
+    // Function that opens the popup window to create OR edit work orders ****************************************
+    function onEdit(e) {
+        var editWindow = this.editable.element.data("kendoWindow");
+        editWindow.setOptions({ title: "", height: "80%", width: "85%", resizable: false });
+        editWindow.center();
+        editWindow.bind("close", onEditWindowClose);
+        cloneCount = 0;
+
+        $(".k-grid-save-command").off().on("click", SaveOrUpdate);
+        $(".k-grid-cancel-command").hide();
+        //$(".k-window-titlebar-action.k-button.k-button-md.k-rounded-md.k-button-flat.k-button-flat-base.k-icon-button").removeClass("k-button-flat k-button-flat-base").addClass("k-button-solid k-button-solid-error");
+        //$(".k-window-titlebar-action.k-button.k-button-md.k-rounded-md.k-icon-button.k-button-solid.k-button-solid-error.k-button-flat").removeClass("k-button-flat");
+
+        if (!e.model.isNew()) {
+            isNew = false;
+            workOrderId = e.model.get('Id');
+            $.ajax({
+                type: 'GET',
+                url: '/WorkOrder/ReadWorkOrders',
+                contentType: 'application/json; charset=utf-8',
+                data: { id: e.model.get("Id") },
+                success: function (result) {
+                    LoadWorkOrderInfo(result);
+                },
+                error: function (xhr, textStatus, errorThrown) {
+                    fnShowMessage(xhr.responseText, "Error");
+                },
+                complete: function () {
+                    initializeControls();
+                }
+            })
+        }
+        else {
+            isNew = true;
+            addSegment(null);
+
+            @{
+                if (currentUser.MaintenanceSectionId.ToString().Length == 0)
+                    currentUser.MaintenanceSectionId = -1;
+            }
+
+                 var currentMaintSection = @currentUser.MaintenanceSectionId == -1 ? null : @currentUser.MaintenanceSectionId;
+
+            $('span:contains(Update)').text('Create');
+            $.ajax({
+                type: 'GET',
+                url: '/WorkOrder/ReadMaintenanceSectionParameters',
+                contentType: 'application/json; charset=utf-8',
+                data: { id: currentMaintSection },
+                success: function (result) {
+                    LoadMaintenanceSectionInfo(result);
+                },
+                error: function (xhr, textStatus, errorThrown) {
+                    fnShowMessage(xhr.responseText, "Error");
+                },
+                complete: function () {
+                    initializeControls();
+                }
+            })
+        }
+    }
+
+    // Initialize the buttons that the current user (based on role) will see when opening the work order window ***********************************************
+    function initializeControls() {
+        if ("@currentUserRole" == "ADMIN") {
+            $('<button type="button" class="k-button k-button-md k-button-rectangle k-rounded-md k-button-solid k-button-solid-dark" onclick="CreatePDF()"><span class="k-icon k-i-file-pdf k-button-icon"></span><span class="k-button-text">Generate PDF</span></button>').insertAfter(".k-grid-save-command");
+        }
+        else if ("@currentUserRole" == "SUPERVISOR") {
+            //$('<button type="button" class="k-button k-button-md k-button-rectangle k-rounded-md k-button-solid k-button-solid-dark" onclick="notifyButton()"><span class="k-icon k-i-bell k-button-icon"></span><span class="k-button-text">Notify</span></button>').insertAfter(".k-grid-save-command");
+            //$('#approvedByDistrict').data("kendoDropDownList").enable(false);
+            //$('#approvedByDistrictDate').data("kendoDatePicker").enable(false);
+        }
+        else if ("@currentUserRole" == "USER") {
+            //$('<button type="button" class="k-button k-button-md k-button-rectangle k-rounded-md k-button-solid k-button-solid-dark" onclick="notifyButton()"><span class="k-icon k-i-bell k-button-icon"></span><span class="k-button-text">Notify</span></button>').insertAfter(".k-grid-save-command");
+            //$('#approvedByMaintenance').data("kendoDropDownList").enable(false);
+            //$('#approvedByMaintenanceDate').data("kendoDatePicker").enable(false);
+            //$('#approvedByDistrict').data("kendoDropDownList").enable(false);
+            //$('#approvedByDistrictDate').data("kendoDatePicker").enable(false);
+        }
+
+        if ($('#approvedByDistrict').data("kendoDropDownList").value().toString().length == 0) {
+            $('#signReceivedOnDate').data("kendoDatePicker").enable(false);
+            $('#signInstalledOnDate').data("kendoDatePicker").enable(false);
+        }
+
+        $('#requestedByMaintenance').data("kendoDropDownList").enable(false);
+        $('#requestedByMaintenanceDate').data("kendoDatePicker").enable(false);
+        $('#approvedByMaintenance').data("kendoDropDownList").enable(false);
+        $('#approvedByMaintenanceDate').data("kendoDatePicker").enable(false);
+        $('#approvedByDistrict').data("kendoDropDownList").enable(false);
+        $('#approvedByDistrictDate').data("kendoDatePicker").enable(false);
+    }
+
+    // Function that sets if the popup will close or not when clicking the update and close buttons **************************************
+    function onEditWindowClose(e) {
+        if (!closePopup) {
+            e.preventDefault();
+            closePopup = true;
+        }
+    }
+
+    // Sends email when clicking on the notify button **************************************************
+    function notifyButton() {
+        $.ajax({
+            type: 'GET',
+            url: '/WorkOrder/SendMail',
+            contentType: 'application/json; charset=utf-8',
+            success: function (result) {
+                fnShowMessage("Notification sent", "Success");
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                fnShowMessage(xhr.responseText, "Error");
+            }
+        });
+    }
+
+    // Sets behaviour of popup when clicking save/update depending on if it is a new or an existing work order ****************************
+    function SaveOrUpdate() {
+        if (isNew) {
+            closePopup = true;
+            SaveWorkOrder();
+        }
+        else {
+            closePopup = false;
+            UpdateWorkOrder();
+        }
+    }
+
+    // Load current work order information to populate form's dropdown lists (Used when updating a work order) ****************************
+    function LoadWorkOrderInfo(result) {
+        var jsonResult = jQuery.parseJSON(result);
+        var dropdownVal;
+        var currentDate = new Date(Date.now());
+
+        dropdownVal = jsonResult[0].MaterialRequestedFromId;
+        $("#requestedFrom").data("kendoDropDownList").value(dropdownVal);
+
+        dropdownVal = jsonResult[0].MaterialRequestedById;
+        $("#requestedBy").data("kendoDropDownList").value(dropdownVal);
+
+        dropdownVal = jsonResult[0].FY;
+        $("#year").data("kendoDropDownList").value(dropdownVal);
+
+        dropdownVal = jsonResult[0].DepartmentId;
+        $("#department").data("kendoDropDownList").value(dropdownVal);
+
+        dropdownVal = jsonResult[0].AccountId;
+        $("#account").data("kendoDropDownList").value(dropdownVal);
+
+        dropdownVal = jsonResult[0].FundId;
+        $("#fund").data("kendoDropDownList").value(dropdownVal);
+
+        dropdownVal = jsonResult[0].TaskId;
+        $("#task").data("kendoDropDownList").value(dropdownVal);
+
+        dropdownVal = jsonResult[0].PCBusId;
+        $("#pcBus").data("kendoDropDownList").value(dropdownVal);
+
+        dropdownVal = jsonResult[0].ProjectId;
+        $("#project").data("kendoDropDownList").value(dropdownVal);
+
+        dropdownVal = jsonResult[0].ActivityId;
+        $("#activity").data("kendoDropDownList").value(dropdownVal);
+
+        dropdownVal = jsonResult[0].ResTypeId;
+        $("#resType").data("kendoDropDownList").value(dropdownVal);
+
+        dropdownVal = jsonResult[0].RequestedByMaintenanceId;
+        $("#requestedByMaintenance").data("kendoDropDownList").value(dropdownVal);
+
+        dropdownVal = jsonResult[0].ApprovedByMaintenanceId;
+        $("#approvedByMaintenance").data("kendoDropDownList").value(dropdownVal);
+
+        dropdownVal = jsonResult[0].ApprovedByDistrictId;
+        $("#approvedByDistrict").data("kendoDropDownList").value(dropdownVal);
+
+        var dateParts = jsonResult[0].RequestedByMaintenanceDate.split('-');
+        var date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+        $("#requestedByMaintenanceDate").data("kendoDatePicker").value(date);
+
+        if (jsonResult[0].ApprovedByMaintenanceDate != null) {
+            dateParts = jsonResult[0].ApprovedByMaintenanceDate.split('-');
+            date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+            $("#approvedByMaintenanceDate").data("kendoDatePicker").value(date);
+        }
+
+        if (jsonResult[0].ApprovedByDistrictDate != null) {
+            dateParts = jsonResult[0].ApprovedByDistrictDate.split('-');
+            date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+            $("#approvedByDistrictDate").data("kendoDatePicker").value(date);
+        }
+
+        if (jsonResult[0].SignReceivedDate != null) {
+            dateParts = jsonResult[0].SignReceivedDate.split('-');
+            date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+            $("#signReceivedOnDate").data("kendoDatePicker").value(date);
+        }
+
+        if (jsonResult[0].SignInstalledDate != null) {
+            dateParts = jsonResult[0].SignInstalledDate.split('-');
+            date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
+            $("#signInstalledOnDate").data("kendoDatePicker").value(date);
+        }
+
+        // Values for maint. section and district approvals and dates will be automatically filled in
+        // ONLY when there has not been any records saved for those values
+        if ("@currentUserRole" == "SUPERVISOR" && jsonResult[0].ApprovedByMaintenanceId == null) {
+            $("#approvedByMaintenance").data("kendoDropDownList").value("@currentUser.Id");
+            $("#approvedByMaintenanceDate").data("kendoDatePicker").value(currentDate);
+        }
+        if ("@currentUserRole" == "ADMIN" && jsonResult[0].ApprovedByDistrictId == null) {
+            $("#approvedByDistrict").data("kendoDropDownList").value("@currentUser.Id");
+            $("#approvedByDistrictDate").data("kendoDatePicker").value(currentDate);
+        }
+
+        LoadWorkOrderItemInfo(jsonResult);
+    }
+
+    // Load the information of the items belonging to the work order that it is being edited *********************************************
+    function LoadWorkOrderItemInfo(jsonResult) {
+        var itemsNumber = jsonResult[0].Items.length;
+        var controlVal;
+
+        for (var i = 1; i <= itemsNumber; i++) {
+            addSegment(jsonResult[0].Items[i - 1].SignImage);
+        }
+
+        for (var i = 1; i <= itemsNumber; i++) {
+            controlVal = jsonResult[0].Items[i - 1].NIGP;
+            $("#nigp-" + i).data("kendoTextArea").value(controlVal);
+
+            controlVal = jsonResult[0].Items[i - 1].Quantity;
+            $("#quantity-" + i).data("kendoNumericTextBox").value(controlVal);
+
+            // Kendo Upload control info should be initialized here.
+            // However, Telerik requires that initialization must be done at the time the control is created.
+            // This is all done in addSegment function.
+
+            controlVal = jsonResult[0].Items[i - 1].Latitude;
+            $("#latitude-" + i).data("kendoTextArea").value(controlVal);
+
+            controlVal = jsonResult[0].Items[i - 1].Longitude;
+            $("#longitude-" + i).data("kendoTextArea").value(controlVal);
+
+            controlVal = jsonResult[0].Items[i - 1].Instructions;
+            $("#instructions-" + i).data("kendoTextArea").value(controlVal);
+
+            controlVal = jsonResult[0].Items[i - 1].SpecialInstructions;
+            $("#specialInstructions-" + i).data("kendoTextArea").value(controlVal);
+        }
+    }
+
+    // Auto-populates the dropdown lists linked to the Maintenance Section the logged in user belongs to ***********************************
+    // Used when creating a new work order
+    function LoadMaintenanceSectionInfo(result) {
+        
+        var jsonResult = jQuery.parseJSON(result);
+        var currentDate = new Date(Date.now());
+        const d = new Date();
+        let currentYear = d.getFullYear();
+        
+        $("#year").data("kendoDropDownList").value(currentYear);
+        $("#requestedByMaintenance").data("kendoDropDownList").value("@currentUser.Id");
+        $("#requestedByMaintenanceDate").data("kendoDatePicker").value(currentDate);
+
+        if (result == null)
+            return;
+
+        $("#requestedBy").data("kendoDropDownList").value(jsonResult[0].Id);
+        $("#department").data("kendoDropDownList").value(jsonResult[0].DepartmentId);
+        $("#account").data("kendoDropDownList").value(jsonResult[0].AccountId);
+        $("#fund").data("kendoDropDownList").value(jsonResult[0].FundId);
+        $("#task").data("kendoDropDownList").value(jsonResult[0].TaskId);
+        $("#pcBus").data("kendoDropDownList").value(jsonResult[0].PCBusId);
+        $("#project").data("kendoDropDownList").value(jsonResult[0].ProjectId);
+        $("#activity").data("kendoDropDownList").value(jsonResult[0].ActivityId);
+        $("#resType").data("kendoDropDownList").value(jsonResult[0].ResTypeId);
+    }
+
+    // Function to add a block for a new sign ***********************************************************************************************
+    // imageName argument is used to initialize Kendo Upload control
+    function addSegment(imageName) {
+        cloneCount++;
+        $('#sign-container').append('<div id="sign-form-' + cloneCount + '"></div>');
+        $('#sign-form-' + cloneCount).append('<hr/>');
+        $('#sign-form-' + cloneCount).append('<div id="padding-y-' + cloneCount + '" class="row py-3"></div>');
+        $('#padding-y-' + cloneCount).append('<div id="left-' + cloneCount + '" class="form-group col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6"></div>');
+        $('#left-' + cloneCount).append('<div id="first-row-' + cloneCount + '" class="row pt-3"></div>');
+        $('#first-row-' + cloneCount).append('<div id="first-row-left-' + cloneCount + '" class="form-group col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6"></div>');
+        $('#first-row-left-' + cloneCount).append('<h6 class="pt-3 align-text-bottom">NIGP *</h6>');
+
+        createTextArea('first-row-left-' + cloneCount, 'nigp-' + cloneCount, 1);
+
+        $('#first-row-' + cloneCount).append('<div id="first-row-right-' + cloneCount + '" class="form-group col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6"></div>');
+        $('#first-row-right-' + cloneCount).append('<h6 class="pt-3">Quantity *</h6>');
+
+        createNumericTextbox();
+
+        $('#left-' + cloneCount).append('<h6 class="align-text-bottom, pt-3">Image Upload *</h6>');
+
+        createUpload(imageName);
+
+        $('#left-' + cloneCount).append('<div id="second-row-' + cloneCount + '" class="row pt-3"></div>');
+        $('#second-row-' + cloneCount).append('<div id="second-row-left-' + cloneCount + '" class="form-group col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6"></div>');
+        $('#second-row-left-' + cloneCount).append('<h6 class="pt-3">Latitude *</h6>');
+
+        createTextArea('second-row-left-' + cloneCount, 'latitude-' + cloneCount, 1);
+
+        $('#second-row-' + cloneCount).append('<div id="second-row-right-' + cloneCount + '" class="form-group col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6"></div>');
+        $('#second-row-right-' + cloneCount).append('<h6 class="pt-3">Longitude *</h6>');
+
+        createTextArea('second-row-right-' + cloneCount, 'longitude-' + cloneCount, 1);
+
+        $('#left-' + cloneCount).append('<h6 class="pt-3">Instructions *</h6>');
+
+        createTextArea('left-' + cloneCount, 'instructions-' + cloneCount, 2);
+
+        $('#left-' + cloneCount).append('<h6 class="pt-3">Special Instructions *</h6>');
+
+        createTextArea('left-' + cloneCount, 'specialInstructions-' + cloneCount, 3);
+
+        $('#padding-y-' + cloneCount).append('<div id="right-' + cloneCount + '" class="form-group col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6"></div>');
+
+        createMap();
+    }
+
+    // Function to create a kendo dropdown list dynamically ******************************************************************************
+    function createDropdown() {
+        $('#first-row-left-' + cloneCount).append('<input id="nigp-' + cloneCount + '">');
+        $('#nigp-' + cloneCount).kendoDropDownList({
+            dataTextField: 'Name',
+            dataValueField: 'Id',
+            filter: 'startsWith',
+            dataSource: {
+                transport: {
+                    read: {
+                        url: 'WorkOrder/GetNIGPsAux',
+                        dataType: 'json'
+                    }
+                }
+            },
+            value: null
+        });
+    }
+
+    // Function to create kendo numeric texbox dynamically ******************************************************************************
+    function createNumericTextbox() {
+        $('#first-row-right-' + cloneCount).append('<input id="quantity-' + cloneCount + '" />');
+        $('#quantity-' + cloneCount).kendoNumericTextBox({
+            value: 1,
+            format: 'n0',
+            min: 1,
+            max: 10,
+        });
+    }
+
+    // Function to create kendo text area dynamically ******************************************************************************
+    function createTextArea(idToAppend, id, rowsNumber) {
+        $('#' + idToAppend).append('<textarea id="' + id + '" style="height: auto;"></textarea>');
+        $('#' + id).kendoTextArea({
+            rows: rowsNumber
+        });
+    }
+
+    // Function to create a kendo upload dynamically ******************************************************************************
+    // imageName must be of type string
+    function createUpload(imageName) {
+        var image = [];
+
+        if (typeof imageName != "string")
+            imageName = null;
+
+        if (imageName != null)
+            image = [{ name: imageName }];
+
+        $('#left-' + cloneCount).append('<input id="files-' + cloneCount + '" name="files" type="file"/>');
+        $('#files-' + cloneCount).kendoUpload({
+            multiple: false,
+            async: {
+                saveUrl: '/WorkOrder/SaveUploadedImage',
+                removeUrl: '/WorkOrder/RemoveUploadedImage',
+                autoUpload: true
+            },
+            files: image,
+            success: onUploadSuccess
+        });
+
+        // if length of array is greater than zero,
+        // it means that an image already exists (an existing record is being edited)
+        if (image.length > 0) {
+            onUploadSuccessAux();
+        }
+    }
+
+    // Upload Control Success Event ************************************************************************************************
+    function onUploadSuccess(e) {
+        if (e.operation == "upload") {
+            onUploadSuccessAux();
+        }
+    }
+
+    // Auxiliary function for Upload Control Success Event ******************************************************************************
+    function onUploadSuccessAux() {
+        $('.k-file-name').eq(cloneCount - 1).click(onUploadClick);
+        $('.k-file-name').eq(cloneCount - 1).mouseover(onUploadMouseOver);
+        $('.k-file-name').addClass("link-primary");
+    }
+
+    // Upload Control Click Event **********************************************************************************************
+    function onUploadClick() {
+        var imageName = $('.k-file-name').eq($('.k-file-name').index(this)).attr('title');
+        var imageWindow = $('#imageWindow').data('kendoWindow');
+        imageWindow.content("<img class='img-fluid' src='/images/signs/" + imageName + "' alt='Image'>");
+        imageWindow.center();
+        imageWindow.open();
+    }
+
+    // Upload Control Mouse Over Event **********************************************************************************************
+    function onUploadMouseOver() {
+        $('.k-file-name').css('cursor', 'pointer');
+    }
+
+    // Function to create a kendo map dynamically ******************************************************************************
+    function createMap() {
+        var mapNum = cloneCount;
+
+        $('#right-' + cloneCount).append('<div id="map-' + cloneCount + '" style="width: 100%; height: 510px;"></div>');
+        var map = $('#map-' + cloneCount).kendoMap({
+            zoom: 11,
+            center: [27.5473, -99.4842],
+            layers: [{
+                type: 'tile',
+                urlTemplate: 'https://#= subdomain #.tile.openstreetmap.org/#= zoom #/#= x #/#= y #.png',
+                attribution: '&copy; <a href="https://osm.org/copyright">OpenStreetMap contributors</a>'
+            }],
+            click: function (e) {
+                var latitude = $('#latitude-' + mapNum).data("kendoTextArea");
+                var longitude = $('#longitude-' + mapNum).data("kendoTextArea");
+                var location = e.location;
+
+                latitude.value(location.lat);
+                latitude.trigger("change");
+
+                longitude.value(location.lng);
+                longitude.trigger("change");
+
+                addMarker(location.lat, location.lng);
+            }
+        }).data("kendoMap");
+
+        // Function to add a marker dynamically
+        function addMarker(lat, lng) {
+            map.markers.clear();
+            map.markers.add({
+                location: [lat, lng],
+                tooltip: {
+                    content: "New Marker"
+                }
+            });
+        }
+
+        // Function that sets the pin at the beginning if there is a value for latitude and longitude
+        // Function is delayed to ensure the textarea values are loaded first
+        setTimeout(function () {
+
+            if ($('#latitude-' + mapNum).data("kendoTextArea").value() == "")
+                return;
+
+            var savedLatitude = $('#latitude-' + mapNum).data("kendoTextArea").value();
+            var savedLongitude = $('#longitude-' + mapNum).data("kendoTextArea").value();
+            addMarker(savedLatitude, savedLongitude);
+        }, 500); // Adjust the delay as needed
+    }
+
+    // Function to save a new work order ************************************************************************************************************
+    function SaveWorkOrder() {
+        var workOrder = GetWorkOrderData();
+
+        $.ajax({
+            type: 'POST',
+            url: '/WorkOrder/Create',
+            contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify(workOrder),
+            success: function (result) {
+                fnShowMessage("Work order was created", "Success");
+                RefreshGrid();
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                fnShowMessage(xhr.responseText, "Error");
+            }
+        });
+    }
+
+    // Function to save/update an existing work order **************************************************************************************************
+    function UpdateWorkOrder() {
+        var workOrder = GetWorkOrderData();
+        $.ajax({
+            type: 'POST',
+            url: '/WorkOrder/Update',
+            contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify(workOrder),
+            success: function (result) {
+                fnShowMessage("Information was updated", "Success");
+                RefreshGrid();
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                fnShowMessage(xhr.responseText, "Error");
+            }
+        });
+    }
+
+    // Function that refreshes the grid *************************************************************************************************
+    function RefreshGrid() {
+        $('#workOrderGrid').data('kendoGrid').dataSource.read();
+        $('#workOrderGrid').data('kendoGrid').refresh();
+    }
+
+    // Function that creates a PDF from the form of a work order **************************************************************************
+    function CreatePDF() {
+        var workOrder = GetWorkOrderData();
+        var fileName = '';
+        $.ajax({
+            type: 'POST',
+            url: '/WorkOrder/ExportPdf',
+            contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify(workOrder),
+            success: function (result) {
+                fileName = result;
+            },
+            error: function (xhr, textStatus, errorThrown) {
+                fnShowMessage(xhr.responseText, "Error");
+            },
+            complete: function () {
+                window.open('/SignRequestPDFs/' + fileName, '_blank');
+            }
+        });
+    }
+
+    // Function that loads the work order data that is being updated into the form ***************************************************************
+    function GetWorkOrderData() {
+        var files = [];
+
+        var workOrder = {
+            Id: workOrderId,
+            Number: 0,
+            MaterialRequestedFromId: $("#requestedFrom").val(),
+            MaterialRequestedById: $("#requestedBy").val(),
+            DepartmentId: $("#department").val(),
+            AccountId: $("#account").val(),
+            FY: $("#year").val(),
+            FundId: $("#fund").val(),
+            TaskId: $("#task").val().toString().length != 0 ? $("#task").val() : null,
+            PCBusId: $("#pcBus").val(),
+            ProjectId: $("#project").val(),
+            ActivityId: $("#activity").val(),
+            ResTypeId: $("#resType").val(),
+            RequestedByMaintenanceId: $("#requestedByMaintenance").val(),
+            RequestedByMaintenanceDate: new Date($("#requestedByMaintenanceDate").val()),
+            ApprovedByMaintenanceId: $("#approvedByMaintenance").val().toString().length != 0 ? $("#approvedByMaintenance").val() : null,
+            ApprovedByMaintenanceDate: $("#approvedByMaintenanceDate").val().toString().length != 0 ? new Date($("#approvedByMaintenanceDate").val()) : null,
+            ApprovedByDistrictId: $("#approvedByDistrict").val().toString().length != 0 ? $("#approvedByDistrict").val() : null,
+            ApprovedByDistrictDate: $("#approvedByDistrictDate").val().toString().length != 0 ? new Date($("#approvedByDistrictDate").val()) : null,
+            SignReceivedDate: $("#signReceivedOnDate").val().toString().length != 0 ? new Date($("#signReceivedOnDate").val()) : null,
+            SignInstalledDate: $("#signInstalledOnDate").val().toString().length != 0 ? new Date($("#signInstalledOnDate").val()) : null,
+            Items: []
+        }
+
+        var imageName = '';
+
+        for (var i = 1; i <= cloneCount; i++) {
+            if ($('#sign-form-' + i).length > 0) {
+                files = $("#files-" + i).data("kendoUpload").getFiles();
+
+                // if length = 0, then the sign image (upload control) was not edited, the sign image is the same as when the record was loaded
+                if (files.length == 0)
+                    imageName = $("#files-" + i).data("kendoUpload").files[0].name;
+                else
+                    imageName = files[0].name;
+
+                workOrder.Items.push({
+                    NIGP: $("#nigp-" + i).val(),
+                    Quantity: $("#quantity-" + i).val(),
+                    Instructions: $("#instructions-" + i).val(),
+                    SignImage: imageName,
+                    Latitude: $("#latitude-" + i).val(),
+                    Longitude: $("#longitude-" + i).val(),
+                    SpecialInstructions: $("#specialInstructions-" + i).val()
+                });
+            }
+        }
+        return workOrder;
+    }
+
+</script>
+
+@* ***************************************************************************************************** *@
+@* Container for window used to display the work order form *@
+@* ***************************************************************************************************** *@
+
+<script id="popup-editor" type="text/x-kendo-template">
+    @Html.Partial("_Insert")
+</script>

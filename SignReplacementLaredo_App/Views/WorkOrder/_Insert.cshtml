@@ -1,0 +1,200 @@
+﻿@using System.Collections.Generic;
+@using SignReplacementLaredo;
+@using SignReplacementLaredo.ViewModels;
+@using SignReplacementLaredo_App.Models;
+@using Microsoft.AspNetCore.Identity;
+@inject UserManager<ApplicationUser> userManager;
+@model SignReplacementLaredo.HelperModels.WorkOrderHelperModel
+@addTagHelper *, Kendo.Mvc
+@addTagHelper *, Microsoft.AspNetCore.Mvc.TagHelpers
+
+@{
+	IEnumerable<RegionalDistributionCenter> reqFrom = (IEnumerable<RegionalDistributionCenter>)ViewData["regionalDistributionCenters"];
+	IEnumerable<Year> year = (IEnumerable<Year>)ViewData["years"];
+	IEnumerable<Department> department = (IEnumerable<Department>)ViewData["departments"];
+	IEnumerable<Account> account = (IEnumerable<Account>)ViewData["accounts"];
+	IEnumerable<Fund> fund = (IEnumerable<Fund>)ViewData["funds"];
+	IEnumerable<Task_> task = (IEnumerable<Task_>)ViewData["tasks"];
+	IEnumerable<PCBus> pCBus = (IEnumerable<PCBus>)ViewData["pCBuses"];
+	IEnumerable<Project> project = (IEnumerable<Project>)ViewData["projects"];
+	IEnumerable<Activity> activity = (IEnumerable<Activity>)ViewData["activities"];
+	IEnumerable<ResType> resType = (IEnumerable<ResType>)ViewData["resTypes"];
+	IEnumerable<ApplicationUser> maintSectionRequestor = (IEnumerable<ApplicationUser>)ViewData["maintenanceSectionRequestors"];
+	IEnumerable<ApplicationUser> maintSectionApprover = (IEnumerable<ApplicationUser>)ViewData["maintenanceSectionApprovers"];
+	IEnumerable<ApplicationUser> districtApprover = (IEnumerable<ApplicationUser>)ViewData["districtApprovers"];
+	IEnumerable<MaintenanceSection> reqBy = (IEnumerable<MaintenanceSection>)ViewData["maintenanceSections"];
+	string currentUserId = (string)ViewData["currentUserId"];
+
+	var currentUser = await userManager.GetUserAsync(User);
+	var roles = userManager.GetRolesAsync(currentUser).Result;
+	bool isAdmin = roles[0] == "ADMIN" ? true : false;
+}
+
+@* ***************************************************************************************************************************************** *@
+@* Container for work order form  *@
+@* ***************************************************************************************************************************************** *@
+
+<div>
+	<h3 class="text-center"> SIGN REQUEST</h3>
+
+	@* Block for set of data of general info ********************************************************************************************** *@
+
+	<form id="workOrderForm">
+		<div class="row pt-3">
+			<div class="form-group col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+				<h6 class="pt-3 text-center">Material Requested From *</h6>
+				<kendo-dropdownlist id="requestedFrom" name="requestedFrom" datatextfield="Name" datavaluefield="Id" bind-to=@reqFrom index=-1 filter="FilterType.StartsWith" is-in-client-template=true>
+				</kendo-dropdownlist>
+			</div>
+		</div>
+		<div class="row" >
+			<div class="form-group col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6">
+				<h6 class="pt-3 text-center">Material Requested By *</h6>
+
+				<kendo-dropdownlist id="requestedBy" name="requestedBy" datatextfield="Name" datavaluefield="Id" bind-to=@reqBy index=-1 filter ="FilterType.StartsWith" is-in-client-template=true>
+				</kendo-dropdownlist>
+			</div>
+			<div class="form-group col-12 col-sm-12 col-md-6 col-lg-3 col-xl-3">
+			</div>
+			<div class="form-group col-12 col-sm-12 col-md-6 col-lg-3 col-xl-3">
+				<h6 class="pt-3 text-center">FY *</h6>
+				<kendo-dropdownlist id="year" name="year" datatextfield="FiscalYear" datavaluefield="FiscalYear" bind-to=@year index=-1 filter ="FilterType.StartsWith" is-in-client-template=true>
+				</kendo-dropdownlist>
+			</div>
+		</div>
+		<div class="row" >
+			<div class="form-group col-12 col-sm-12 col-md-6 col-lg-3 col-xl-3">
+				<h6 class="pt-3 text-center">Dept *</h6>
+				<kendo-dropdownlist id="department" name="department" datatextfield="Name" datavaluefield="Id" bind-to=@department index=-1 filter ="FilterType.StartsWith" is-in-client-template=true>
+				</kendo-dropdownlist>
+			</div>
+			<div class="form-group col-12 col-sm-12 col-md-6 col-lg-3 col-xl-3">
+				<h6 class="pt-3 text-center">Account *</h6>
+				<kendo-dropdownlist id="account" name="account" datatextfield="Name" datavaluefield="Id" bind-to=@account index=-1 filter="FilterType.StartsWith" is-in-client-template=true>
+				</kendo-dropdownlist>
+			</div>
+			<div class="form-group col-12 col-sm-12 col-md-6 col-lg-3 col-xl-3">
+				<h6 class="pt-3 text-center">Fund *</h6>
+				<kendo-dropdownlist id="fund" name="fund" datatextfield="Name" datavaluefield="Id" bind-to=@fund index =-1 filter="FilterType.StartsWith" is-in-client-template=true>
+				</kendo-dropdownlist>
+			</div>
+			<div class="form-group col-12 col-sm-12 col-md-6 col-lg-3 col-xl-3">
+				<h6 class="pt-3 text-center">Task</h6>
+				<kendo-dropdownlist id="task" name="task" datatextfield="Name" datavaluefield="Id" bind-to=@task index=-1 filter="FilterType.StartsWith" is-in-client-template=true>
+				</kendo-dropdownlist>
+			</div>
+		</div>
+		<div class="row pb-3" >
+			<div class="form-group col-12 col-sm-12 col-md-6 col-lg-3 col-xl-3">
+				<h6 class="pt-3 text-center">PC Bus *</h6>
+				<kendo-dropdownlist id="pcBus" name="pcBus" datatextfield="Name" datavaluefield="Id" bind-to=@pCBus index=-1 filter="FilterType.StartsWith" is-in-client-template=true>
+				</kendo-dropdownlist>
+			</div>
+			<div class="form-group col-12 col-sm-12 col-md-6 col-lg-3 col-xl-3">
+				<h6 class="pt-3 text-center">Project *</h6>
+				<kendo-dropdownlist id="project" name="project" datatextfield="Name" datavaluefield="Id" bind-to=@project index =-1 filter="FilterType.StartsWith" is-in-client-template=true>
+				</kendo-dropdownlist>
+			</div>
+			<div class="form-group col-12 col-sm-12 col-md-6 col-lg-3 col-xl-3">
+				<h6 class="pt-3 text-center">Activity *</h6>
+				<kendo-dropdownlist id="activity" name="activity" datatextfield="Name" datavaluefield="Id" bind-to=@activity index=-1 filter="FilterType.StartsWith" is-in-client-template=true>
+				</kendo-dropdownlist>
+			</div>
+			<div class="form-group col-12 col-sm-12 col-md-6 col-lg-3 col-xl-3">
+				<h6 class="pt-3 text-center">Res Type *</h6>
+				<kendo-dropdownlist id="resType" name="resType" datatextfield="Name" datavaluefield="Id" bind-to=@resType index=-1 filter="FilterType.StartsWith" is-in-client-template=true>
+				</kendo-dropdownlist>
+			</div>
+		</div>
+
+		@* Block for set of data that includes sign info and map component ******************************************************************************************************** *@
+
+		<div id="sign-container">
+
+			@* Content is created dynamically in work order view *@
+
+		</div>
+
+		@* Button currently disabled (only one sign will be created per request) *@
+
+		@* <div class="center">
+			<kendo-button name="textButton" is-in-client-template=true on-click="addSegment"> Add New Sign </kendo-button>
+		</div> *@
+
+
+		@* Block for requested and approved by section **************************************************************************************************************************** *@
+
+		<div class="row pt-3">
+			<div class="form-group col-12 col-sm-4 col-md-4 col-lg-2 col-xl-2">
+				<h6 class="align-text-bottom">Requested By *&nbsp;</h6>
+			</div>
+			<div class="form-group col-12 col-sm-8 col-md-8 col-lg-5 col-xl-5">
+				<kendo-dropdownlist id="requestedByMaintenance" name="requestedByMaintenance" datatextfield="ContactFullName" datavaluefield="Id" bind-to=@maintSectionRequestor filter="FilterType.StartsWith" is-in-client-template=true>
+				</kendo-dropdownlist>
+			</div>
+			<div class="form-group col-12 col-sm-4 col-md-4 col-lg-1 col-xl-1">
+				<h6>Date *&nbsp;</h6>
+			</div>
+			<div class="form-group col-12 col-sm-8 col-md-8 col-lg-4 col-xl-4">
+				<kendo-datepicker id="requestedByMaintenanceDate" name='requestedByMaintenanceDate' format="MMM-dd-yyyy" is-in-client-template=true>
+				</kendo-datepicker>
+			</div>
+		</div>
+
+		<div class="row pt-3">
+			<div class="form-group col-12 col-sm-4 col-md-4 col-lg-2 col-xl-2">
+				<h6 class="align-text-bottom">Approved By&nbsp;</h6>
+			</div>
+			<div class="form-group col-12 col-sm-8 col-md-8 col-lg-5 col-xl-5">
+				<kendo-dropdownlist id="approvedByMaintenance" name="approvedByMaintenance" datatextfield="ContactFullName" datavaluefield="Id" bind-to=@maintSectionApprover index=-1 filter="FilterType.StartsWith" is-in-client-template=true>
+				</kendo-dropdownlist>
+			</div>
+			<div class="form-group col-12 col-sm-4 col-md-4 col-lg-1 col-xl-1">
+				<h6>Date&nbsp;</h6>
+			</div>
+			<div class="form-group col-12 col-sm-8 col-md-8 col-lg-4 col-xl-4">
+				<kendo-datepicker id="approvedByMaintenanceDate" name="approvedByMaintenanceDate" format="MMM-dd-yyyy" is-in-client-template=true>
+				</kendo-datepicker>
+			</div>
+		</div>
+
+		<div class="row pt-3">
+			<div class="form-group col-12 col-sm-4 col-md-4 col-lg-2 col-xl-2">
+				<h6 class="align-text-bottom">Approved By&nbsp;</h6>
+			</div>
+			<div class="form-group col-12 col-sm-8 col-md-8 col-lg-5 col-xl-5">
+				<kendo-dropdownlist id="approvedByDistrict" name="approvedByDistrict" datatextfield="ContactFullName" datavaluefield="Id" bind-to=@districtApprover index=-1 filter="FilterType.StartsWith" is-in-client-template=true>
+				</kendo-dropdownlist>
+			</div>
+			<div class="form-group col-12 col-sm-4 col-md-4 col-lg-1 col-xl-1">
+				<h6>Date&nbsp;</h6>
+			</div>
+			<div class="form-group col-12 col-sm-8 col-md-8 col-lg-4 col-xl-4">
+				<kendo-datepicker id="approvedByDistrictDate" name="approvedByDistrictDate" format="MMM-dd-yyyy" is-in-client-template=true>
+				</kendo-datepicker>
+			</div>
+		</div>
+
+		<div class="row pt-3">
+			<div class="form-group col-12 col-sm-4 col-md-4 col-lg-2 col-xl-2">
+				<h6 class="align-text-bottom">Recieved on&nbsp;</h6>
+			</div>
+
+			<div class="form-group col-12 col-sm-4 col-md-4 col-lg-2 col-xl-2">
+				<kendo-datepicker id="signReceivedOnDate" name="signReceivedOnDate" format="MMM-dd-yyyy" is-in-client-template=true>
+				</kendo-datepicker>
+			</div>
+		</div>
+
+		<div class="row pt-3">
+			<div class="form-group col-12 col-sm-4 col-md-4 col-lg-2 col-xl-2">
+				<h6 class="align-text-bottom">Installed on&nbsp;</h6>
+			</div>
+
+			<div class="form-group col-12 col-sm-4 col-md-4 col-lg-2 col-xl-2">
+				<kendo-datepicker id="signInstalledOnDate" name="signInstalledOnDate" format="MMM-dd-yyyy" is-in-client-template=true>
+				</kendo-datepicker>
+			</div>
+		</div>
+	</form>
+</div>
