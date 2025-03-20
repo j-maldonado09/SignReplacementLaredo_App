@@ -14,7 +14,7 @@ namespace SignReplacementLaredo_App.Services
             string fileName = Path.Combine(physicalPath, "SignRequestPDFs", "SignRequest_" + workOrderNamesHelperModel.MaterialRequestedByNumber + "-" + workOrder.Id + ".pdf");
             float narrowBorder = 0.5f;
             float thickBorder = 3f;
-            string fieldColor = "#C8D2FF";
+            string fieldColor = "#FFFFFF";
             string shopColor = "BFFFF6";
 
             Document.Create(container =>
@@ -23,87 +23,117 @@ namespace SignReplacementLaredo_App.Services
                 {
                     page.Size(PageSizes.A4);
                     page.Margin(2, Unit.Centimetre);
-
+                   
                     page.Header()
-                        .Row(row =>
+                        .Column(column =>
                         {
-                            row.ConstantItem(75)
-                                .Image(Path.Combine(physicalPath, "images", "logo.png"));
-                            row.RelativeItem()
-                                .AlignRight()
-                                .Text("Work Order #: ")
-                                .FontSize(11);
-                            row.ConstantItem(85)
-                                .Text(" " + workOrderNamesHelperModel.MaterialRequestedByNumber + "-" + workOrder.Id + " ")
-                                .FontSize(11)
-                                .BackgroundColor(fieldColor);
-                        });
-
+                            column.Item()
+                                .Row(row =>
+                                {
+                                    row.ConstantItem(75)
+                                       .Image(Path.Combine(physicalPath, "images", "logo.png"));
+                                    row.RelativeItem()
+                                        .AlignRight()
+                                        .Text("Work Order #: ")
+                                        .FontSize(11);
+                                    row.ConstantItem(85)
+                                        .Text(" " + workOrderNamesHelperModel.MaterialRequestedByNumber + "-" + workOrder.Id + " ")
+                                        .FontSize(11)
+                                        .BackgroundColor(fieldColor);
+                                });
+                            column.Item()
+                                .PaddingLeft(4)
+                                .Text(text =>
+                                {
+                                    text.Span("Page ").FontSize(8);
+                                    text.CurrentPageNumber().FontSize(8);
+                                    text.Span(" of ").FontSize(8);
+                                    text.TotalPages().FontSize(8);
+                                });
+                         });
 
                     page.Content()
 
                         .Column(col =>
                         {
                             col.Item()
-                                .Row(row =>
-                                {
-                                    row.ConstantItem(165)
-                                        .Column(col =>
-                                        {
-                                            col.Item()
+                               .Row(row =>
+                               {
+                                   row.ConstantItem(162)
+                                       .Column(col =>
+                                       {
+                                           col.Item()
                                                 .Text(" REGIONAL SIGN REQUEST ")
                                                 .Bold().FontSize(13);
-                                            col.Item()
-                                                .PaddingTop(20)
-                                                .BorderTop(narrowBorder)
-                                                .BorderVertical(narrowBorder)
-                                                .Text(" Material Requested From ")
-                                                .FontSize(11);
-                                            col.Item()
-                                                .BorderBottom(narrowBorder)
-                                                .BorderVertical(narrowBorder)
-                                                .Background(fieldColor)
-                                                .Text(" " + workOrderNamesHelperModel.MaterialRequestedFromName + " RDC")
-                                                .FontSize(11);
-                                        });
-                                    row.RelativeItem()
-                                        .AlignRight()
-                                        .Column(col =>
-                                        {
-                                            col.Item()
-                                                .BorderTop(narrowBorder)
-                                                .BorderVertical(narrowBorder)
-                                                .Text("  Material Requested By  ")
-                                                .FontSize(11);
-                                            col.Item()
-                                                .BorderVertical(narrowBorder)
-                                                .Text("  (i.e. Name of Requestor, Name of City/Town, and Contact Phone/Email)  ")
-                                                .FontSize(7)
-                                                .FontColor("#B7B7B7");
-                                            col.Item()
-                                                .BorderVertical(narrowBorder)
-                                                .Background(fieldColor)
-                                                .Text(" " + workOrderNamesHelperModel.MaterialRequestedByName + " MAINTENANCE SECTION - " + workOrderNamesHelperModel.MaterialRequestedByNumber)
-                                                .FontSize(10);
-                                            col.Item()
-                                                .BorderVertical(narrowBorder)
-                                                .Background(fieldColor)
-                                                .Text(" " + workOrderNamesHelperModel.MaterialRequestedByAddress)
-                                                .FontSize(10);
-                                            col.Item()
-                                                .BorderBottom(narrowBorder)
-                                                .BorderVertical(narrowBorder)
-                                                .Background(fieldColor)
-                                                .Text(" " + workOrderNamesHelperModel.MaterialRequestedByCity + ", " + workOrderNamesHelperModel.MaterialRequestedByState + " " + workOrderNamesHelperModel.MaterialRequestedByZipCode)
-                                                .FontSize(10);
-                                            col.Item()
-                                                .BorderBottom(narrowBorder)
-                                                .BorderVertical(narrowBorder)
-                                                .Background(fieldColor)
-                                                .Text(" " + workOrderNamesHelperModel.MaterialRequestedByEmail.ToLower())
-                                                .FontSize(10);
-                                        });
-                                });
+                                           col.Item()
+                                               .PaddingTop(25)
+                                               .BorderTop(narrowBorder)
+                                               .BorderVertical(narrowBorder)
+                                               .Text(" Material Requested From ")
+                                               .FontSize(11);
+                                           col.Item()
+                                               .BorderBottom(narrowBorder)
+                                               .BorderVertical(narrowBorder)
+                                               .Background(fieldColor)
+                                               .Text(" " + workOrderNamesHelperModel.MaterialRequestedFromName + " RDC")
+                                               .FontSize(11);
+                                       });
+
+                                   row.Spacing(5);
+                                   row.ConstantItem(100)
+                                       .Column(col =>
+                                       {
+                                           col.Item()
+                                              .PaddingTop(62)
+                                              .BorderTop(narrowBorder)
+                                              .BorderVertical(narrowBorder)
+                                              .Text(" Dest. INBU ")
+                                              .FontSize(11);
+                                           col.Item()
+                                              .BorderBottom(narrowBorder)
+                                              .BorderVertical(narrowBorder)
+                                              .Background(fieldColor)
+                                              .Text(" ")
+                                              .FontSize(11);
+                                       });
+
+                                   row.Spacing(5);
+                                   row.RelativeItem()
+                                       .Column(col =>
+                                       {
+                                           col.Item()
+                                               .BorderTop(narrowBorder)
+                                               .BorderVertical(narrowBorder)
+                                               .Text("  Material Requested By  ")
+                                               .FontSize(11);
+                                           col.Item()
+                                               .BorderVertical(narrowBorder)
+                                               .Text("  (i.e. Name of Requestor, Name of City/Town, and Contact Phone/Email)  ")
+                                               .FontSize(7)
+                                               .FontColor("#B7B7B7");
+                                           col.Item()
+                                               .BorderVertical(narrowBorder)
+                                               .Background(fieldColor)
+                                               .Text(" " + workOrderNamesHelperModel.MaterialRequestedByName + " MAINTENANCE SECTION - " + workOrderNamesHelperModel.MaterialRequestedByNumber)
+                                               .FontSize(10);
+                                           col.Item()
+                                               .BorderVertical(narrowBorder)
+                                               .Background(fieldColor)
+                                               .Text(" " + workOrderNamesHelperModel.MaterialRequestedByAddress)
+                                               .FontSize(10);
+                                           col.Item()
+                                               .BorderVertical(narrowBorder)
+                                               .Background(fieldColor)
+                                               .Text(" " + workOrderNamesHelperModel.MaterialRequestedByCity + ", " + workOrderNamesHelperModel.MaterialRequestedByState + " " + workOrderNamesHelperModel.MaterialRequestedByZipCode)
+                                               .FontSize(10);
+                                           col.Item()
+                                               .BorderBottom(narrowBorder)
+                                               .BorderVertical(narrowBorder)
+                                               .Background(fieldColor)
+                                               .Text(" " + workOrderNamesHelperModel.MaterialRequestedByEmail.ToLower())
+                                               .FontSize(10);
+                                       });
+                               });
                             col.Item()
                                 .PaddingTop(10)
                                 .Table(table => {
@@ -139,98 +169,6 @@ namespace SignReplacementLaredo_App.Services
                                     table.Cell().Row(2).Column(8).Background(fieldColor).Border(narrowBorder).AlignCenter().Text(workOrderNamesHelperModel.ActivityName).SemiBold().FontSize(9);
                                     table.Cell().Row(2).Column(9).Background(fieldColor).Border(narrowBorder).AlignCenter().Text(workOrderNamesHelperModel.ResTypeName).SemiBold().FontSize(9);
                                 });
-
-                            for (int i = 0; i < workOrder.Items.Count; i++)
-                            {
-                                col.Item()
-                                .PaddingTop(20)
-                                .Row(row =>
-                                {
-                                    row.RelativeItem(1.1f)
-                                        .BorderLeft(narrowBorder)
-                                        .BorderHorizontal(narrowBorder)
-                                        .Column(col => {
-                                            col.Item()
-                                                .Padding(2)
-                                                .Text("NIGP #:")
-                                                .FontSize(11);
-                                            col.Item()
-                                                .PaddingLeft(2)
-                                                .Text("Qty.:")
-                                                .FontSize(11);
-                                            col.Item()
-                                                .Padding(2)
-                                                .Text(" ")
-                                                .FontSize(11);
-
-                                        });
-                                    row.RelativeItem(2)
-                                        .BorderHorizontal(narrowBorder)
-                                        .BorderRight(narrowBorder)
-                                        .Column(col => {
-                                            col.Item()
-                                                .PaddingTop(2)
-                                                .PaddingRight(2)
-                                                .Background(fieldColor)
-                                                .Text(" " + workOrder.Items[i].NIGP)
-                                                .FontSize(11);
-                                            col.Item()
-                                                .PaddingTop(2)
-                                                .PaddingRight(2)
-                                                .Background(fieldColor)
-                                                .Text("  " + workOrder.Items[i].Quantity)
-                                                .FontSize(11);
-                                            //col.Item()
-                                            //    .PaddingHorizontal(2)
-                                            //    .PaddingRight(2)
-                                            //    .Text("")
-                                            //    .FontSize(12);
-
-                                        });
-                                    row.RelativeItem(9)
-                                        .BorderHorizontal(narrowBorder)
-                                        .BorderRight(narrowBorder)
-                                        .Column(col => {
-                                            col.Item()
-                                                .Row(row =>
-                                                {
-                                                    row.ConstantItem(75)
-                                                    .Padding(10)
-                                                    .Image(Path.Combine(physicalPath, "images", "signs", workOrder.Items[i].SignImage));
-                                                });
-                                            //col.Item()
-                                            //    .Height(55)
-                                            //    .BorderBottom(narrowBorder);
-                                            col.Item()
-                                                .Padding(2)
-                                                .Background(fieldColor)
-                                                .Text("  " + workOrder.Items[i].Instructions)
-                                                .FontSize(11);
-                                        });
-                                });
-                                col.Item()
-                                    .Border(narrowBorder)
-                                    .PaddingHorizontal(2)
-                                    .Text("Special Instructions")
-                                    .FontSize(12);
-                                col.Item()
-                                    .Height(70)
-                                    .Border(narrowBorder)
-                                    .PaddingHorizontal(2)
-                                    .Background(fieldColor)
-                                    .Text(" " + workOrder.Items[i].SpecialInstructions + "\n Location: (" + workOrder.Items[i].Latitude + ", " + workOrder.Items[i].Longitude + ").")
-                                    .FontSize(11);
-                                //col.Item()
-                                //    .Border(narrowBorder)
-                                //    .PaddingHorizontal(2)
-                                //    .Text("Location")
-                                //    .FontSize(12);
-                                //col.Item()
-                                //    .Border(narrowBorder)
-                                //    .Background(fieldColor)
-                                //    .Text("")
-                                //    .FontSize(12);
-                            }
 
                             col.Item()
                                 .PaddingTop(10)
@@ -351,34 +289,130 @@ namespace SignReplacementLaredo_App.Services
                                         .Border(narrowBorder)
                                         .Background(shopColor)
                                         .Column(col => {
-                                             col.Item()
-                                                 .PaddingTop(4)
-                                                 .PaddingRight(5)
-                                                 .AlignCenter()
-                                                 .Text("Send to Attention:")
-                                                 .FontSize(10);
-                                             col.Item()
-                                                 .AlignCenter()
-                                                 .Text("Lubbock R.S.S.")
-                                                 .FontSize(9);
-                                             col.Item()
-                                                 .AlignCenter()
-                                                 .Text("Lubbock, Texas 75751")
-                                                 .FontSize(9);
+                                            col.Item()
+                                                .PaddingTop(4)
+                                                .PaddingRight(5)
+                                                .AlignCenter()
+                                                .Text("Send to Attention:")
+                                                .FontSize(10);
+                                            col.Item()
+                                                .AlignCenter()
+                                                .Text("Lubbock R.S.S.")
+                                                .FontSize(9);
+                                            col.Item()
+                                                .AlignCenter()
+                                                .Text("Lubbock, Texas 75751")
+                                                .FontSize(9);
                                             col.Item()
                                                  .AlignCenter()
                                                  .Text("Phone: 806-748-4408")
                                                  .FontSize(9);
-                                             col.Item()
-                                                 .AlignCenter()
-                                                 .Text("Email: RCW-Sign-Shop@txdot.gov")
-                                                 .FontSize(9);
+                                            col.Item()
+                                                .AlignCenter()
+                                                .Text("Email: RCW-Sign-Shop@txdot.gov")
+                                                .FontSize(9);
                                             col.Item()
                                                  .AlignCenter()
                                                  .Text("")
                                                  .FontSize(7);
-                                         });
+                                        });
                                 });
+                            for (int i = 0; i < workOrder.Items.Count; i++)
+                            {
+                                col.Item()
+                                .PaddingTop(20)
+                                .Row(row =>
+                                {
+                                    row.RelativeItem(1.1f)
+                                        .BorderLeft(narrowBorder)
+                                        .BorderHorizontal(narrowBorder)
+                                        .Column(col => {
+                                            col.Item()
+                                                .Padding(2)
+                                                .Text("NIGP #:")
+                                                .FontSize(11);
+                                            col.Item()
+                                                .PaddingLeft(2)
+                                                .Text("Qty.:")
+                                                .FontSize(11);
+                                            col.Item()
+                                                .Padding(2)
+                                                .Text(" ")
+                                                .FontSize(11);
+
+                                        });
+                                    row.RelativeItem(2)
+                                        .BorderHorizontal(narrowBorder)
+                                        .BorderRight(narrowBorder)
+                                        .Column(col => {
+                                            col.Item()
+                                                .PaddingTop(2)
+                                                .PaddingRight(2)
+                                                .Background(fieldColor)
+                                                .Text(" " + workOrder.Items[i].NIGP)
+                                                .FontSize(11);
+                                            col.Item()
+                                                .PaddingTop(2)
+                                                .PaddingRight(2)
+                                                .Background(fieldColor)
+                                                .Text("  " + workOrder.Items[i].Quantity)
+                                                .FontSize(11);
+                                            //col.Item()
+                                            //    .PaddingHorizontal(2)
+                                            //    .PaddingRight(2)
+                                            //    .Text("")
+                                            //    .FontSize(12);
+
+                                        });
+                                    row.RelativeItem(9)
+                                        .BorderHorizontal(narrowBorder)
+                                        .BorderRight(narrowBorder)
+                                        .Column(col => {
+                                            col.Item()
+                                                .Row(row =>
+                                                {
+                                                    row.ConstantItem(275)
+                                                    .Padding(10)
+                                                    .Image(Path.Combine(physicalPath, "images", "signs", workOrder.Items[i].SignImage));
+                                                });
+                                            //col.Item()
+                                            //    .Height(55)
+                                            //    .BorderBottom(narrowBorder);
+                                            /*col.Item()
+                                                .Padding(2)
+                                                .Background(fieldColor)
+                                                .Text("  " + workOrder.Items[i].Instructions)
+                                                .FontSize(11);*/
+                                        });                                    
+                                });
+                                col.Item()
+                                    .Border(narrowBorder)
+                                    .PaddingHorizontal(2)
+                                    .Text(workOrder.Items[i].Instructions)
+                                    .FontSize(11);
+                                col.Item()
+                                    .Height(70)
+                                    .Border(narrowBorder)
+                                    .PaddingHorizontal(2)
+                                    .Background(fieldColor)
+                                    .Text(text =>
+                                    {
+                                        text.Span("Special Instructions\n").FontSize(12);
+                                        text.Span(workOrder.Items[i].SpecialInstructions + "\nLocation: ("
+                                                  + workOrder.Items[i].Latitude + ", "
+                                                  + workOrder.Items[i].Longitude + ").").FontSize(11);
+                                    });
+                                //col.Item()
+                                //    .Border(narrowBorder)
+                                //    .PaddingHorizontal(2)
+                                //    .Text("Location")
+                                //    .FontSize(12);
+                                //col.Item()
+                                //    .Border(narrowBorder)
+                                //    .Background(fieldColor)
+                                //    .Text("")
+                                //    .FontSize(12);
+                            }                            
                         });
 
                     page.Footer();
