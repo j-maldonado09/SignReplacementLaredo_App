@@ -87,7 +87,7 @@ namespace SignReplacementLaredo_App.Services
                                               .PaddingTop(62)
                                               .BorderTop(narrowBorder)
                                               .BorderVertical(narrowBorder)
-                                              .Text(" Dest. INBU ")
+                                              .Text(" Dest. INBU ") //Dest. INBU field
                                               .FontSize(11);
                                            col.Item()
                                               .BorderBottom(narrowBorder)
