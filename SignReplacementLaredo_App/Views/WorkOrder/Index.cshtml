@@ -420,8 +420,10 @@
         var currentDate = new Date(Date.now());
         const d = new Date();
         let currentYear = d.getFullYear();
+        const currentMonth = d.getMonth() + 1;
+        const fiscalYear = currentMonth >= 9 ? currentYear + 1 : currentYear; //FY is Sept 1 - Aug 31
         
-        $("#year").data("kendoDropDownList").value(currentYear);
+        $("#year").data("kendoDropDownList").value(fiscalYear);
         $("#requestedByMaintenance").data("kendoDropDownList").value("@currentUser.Id");
         $("#requestedByMaintenanceDate").data("kendoDatePicker").value(currentDate);
 
