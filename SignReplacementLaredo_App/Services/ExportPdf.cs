@@ -31,7 +31,7 @@ namespace SignReplacementLaredo_App.Services
                                 .Row(row =>
                                 {
                                     row.ConstantItem(75)
-                                       .Image(Path.Combine(physicalPath, "images", "logo.png"));
+                                       .Image(Path.Combine(physicalPath, "images", "logo form 1593.png"));
                                     row.RelativeItem()
                                         .AlignRight()
                                         .Text("Work Order #: ")

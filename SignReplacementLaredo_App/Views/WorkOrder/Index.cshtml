@@ -104,7 +104,9 @@
 <script>
 
     // variables *********************************************************************************
-    var cloneCount = 0;
+    var cloneCount = 0;             // current number of sign segments
+    var cloneCountMax = 5;         // sets the updated maximum value of sign segments (this increases when sign segments are deleted)
+    const cloneCountLimit = 5;     // limit of sign containers accepted by the application
     var workOrderId = 0;
     var isNew;
     var closePopup = false;
@@ -167,6 +169,7 @@
         editWindow.center();
         editWindow.bind("close", onEditWindowClose);
         cloneCount = 0;
+        cloneCountMax = cloneCountLimit;
 
         $(".k-grid-save-command").off().on("click", SaveOrUpdate);
         $(".k-grid-cancel-command").hide();
@@ -444,7 +447,15 @@
     // Function to add a block for a new sign ***********************************************************************************************
     // imageName argument is used to initialize Kendo Upload control
     function addSegment(imageName) {
+        // Check for maximum number of items per order
+        if (cloneCount >= cloneCountMax) {
+            fnShowMessage("You have reached the maximum (" + cloneCountLimit + ") number of items in this work order", "Warning");
+            return;
+        }
+
+        // Add to clone count
         cloneCount++;
+
         $('#sign-container').append('<div id="sign-form-' + cloneCount + '"></div>');
         $('#sign-form-' + cloneCount).append('<hr/>');
         $('#sign-form-' + cloneCount).append('<div id="padding-y-' + cloneCount + '" class="row py-3"></div>');
@@ -486,6 +497,26 @@
         $('#padding-y-' + cloneCount).append('<div id="right-' + cloneCount + '" class="form-group col-12 col-sm-12 col-md-6 col-lg-6 col-xl-6"></div>');
 
         createMap();
+
+        $('#sign-form-' + cloneCount).append('<div id="button-row-' + cloneCount + '" class="py-3 text-center"></div>');
+
+        // Add button to delete a sign block if there are currently at least 2 blocks
+        if (cloneCount >= 2)
+            createButtonDeleteSign();
+    }
+
+    // Function to create a kendo button to delete sign segment dynamically *******************************************************************************
+    function createButtonDeleteSign() {
+        var cloneCountAux = cloneCount;
+        //$('#sign-form-' + cloneCountAux).append('<button type="button" id="remove-sign-' + cloneCountAux + '"> Remove sign </button>');
+        $('#button-row-' + cloneCountAux).append('<button type="button" id="remove-sign-' + cloneCountAux + '"> Remove sign </button>');
+        $('#remove-sign-' + cloneCountAux).kendoButton({
+            themeColor: "error",
+            click: function (e) {
+                $('#sign-form-' + cloneCountAux).remove();
+                cloneCountMax++;
+            }
+        });
     }
 
     // Function to create a kendo dropdown list dynamically ******************************************************************************
