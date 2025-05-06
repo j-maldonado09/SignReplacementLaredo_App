@@ -417,23 +417,23 @@ namespace SignDesignCorpusApp.Controllers
         // Removed the sign image that was uploaded with the kendo upload control
         public ActionResult RemoveUploadedImage(string[] fileNames)
         {
-            // The parameter of the Remove action must be called "fileNames".
+            //// The parameter of the Remove action must be called "fileNames".
 
-            if (fileNames != null)
-            {
-                foreach (var fullName in fileNames)
-                {
-                    var fileName = Path.GetFileName(fullName);
-                    var physicalPath = Path.Combine(_webHostEnvironment.WebRootPath, "images", "signs", fileName);
+            //if (fileNames != null)
+            //{
+            //    foreach (var fullName in fileNames)
+            //    {
+            //        var fileName = Path.GetFileName(fullName);
+            //        var physicalPath = Path.Combine(_webHostEnvironment.WebRootPath, "images", "signs", fileName);
 
-                    // TODO: Verify user permissions.
+            //        // TODO: Verify user permissions.
 
-                    if (System.IO.File.Exists(physicalPath))
-                    {
-                        System.IO.File.Delete(physicalPath);
-                    }
-                }
-            }
+            //        if (System.IO.File.Exists(physicalPath))
+            //        {
+            //            System.IO.File.Delete(physicalPath);
+            //        }
+            //    }
+            //}
 
             // Return an empty string to signify success.
             return Content("");

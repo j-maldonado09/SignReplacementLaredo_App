@@ -93,7 +93,7 @@ namespace SignReplacementLaredo_App.Services
                                               .BorderBottom(narrowBorder)
                                               .BorderVertical(narrowBorder)
                                               .Background(fieldColor)
-                                              .Text(" ")
+                                              .Text(" 22" + workOrderNamesHelperModel.MaterialRequestedByNumber)
                                               .FontSize(11);
                                        });
 
@@ -371,7 +371,7 @@ namespace SignReplacementLaredo_App.Services
                                             col.Item()
                                                 .Row(row =>
                                                 {
-                                                    row.ConstantItem(275)
+                                                    row.ConstantItem(150)
                                                     .Padding(10)
                                                     .Image(Path.Combine(physicalPath, "images", "signs", workOrder.Items[i].SignImage));
                                                 });
