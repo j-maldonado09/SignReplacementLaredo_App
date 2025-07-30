@@ -397,7 +397,7 @@ namespace SignDesignCorpusApp.Controllers
         // Saves the sign image that was uploaded with the kendo upload control
         public async Task<ActionResult> SaveUploadedImage(IEnumerable<IFormFile> files)
         {
-            // The Name of the Upload component is "files".
+            // The Name attribute of the Kendo Upload component is "files" and it must match the parameter name of this action.
             if (files != null)
             {
                 foreach (var file in files)

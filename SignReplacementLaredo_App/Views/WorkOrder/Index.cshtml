@@ -66,7 +66,7 @@
         <column field="MaterialRequestedFromName" title="Requested From" width="180" />
         <column field="MaterialRequestedById" title="Requested By" hidden=true />
         <column field="MaterialRequestedByName" title="Maintenance Section" />
-        <column name="statusColumn" field="Status" title="Status" width="250" />
+        <column field="Status" title="Status" width="250" />
         <column field="StatusDate" title="Last Updated" format="{0:yyyy/MM/dd}" width="180" />
         <column width="110">
             <commands>
@@ -110,6 +110,8 @@
     var workOrderId = 0;
     var isNew;
     var closePopup = false;
+    var currentWorkOrderStatus = '';    // current work order status used when editing an existing work order
+
 
     // Sets that the popup will be closed. Used by grid's on-close event ***********************************
     function onPopupClose(e) {
@@ -808,6 +810,7 @@
             ApprovedByDistrictDate: $("#approvedByDistrictDate").val().toString().length != 0 ? new Date($("#approvedByDistrictDate").val()) : null,
             SignReceivedDate: $("#signReceivedOnDate").val().toString().length != 0 ? new Date($("#signReceivedOnDate").val()) : null,
             SignInstalledDate: $("#signInstalledOnDate").val().toString().length != 0 ? new Date($("#signInstalledOnDate").val()) : null,
+            Status: currentWorkOrderStatus, 
             Items: []
         }
 
