@@ -232,6 +232,7 @@
 
     // Initialize the buttons that the current user (based on role) will see when opening the work order window ***********************************************
     function initializeControls() {
+        var isEnabled = isNew || currentWorkOrderStatus === "DRAFT" ? false : true; //for new or draft work orders disable fields
         if ("@currentUserRole" == "ADMIN") {
             if(isNew || currentWorkOrderStatus == "DRAFT"){
                 $('<button type="button" class="k-button k-button-md k-button-rectangle k-rounded-md k-button-solid k-button-solid-primary" onclick="SaveOrUpdate(\'Submit\')"<span class="k-button-text">Save & Submit</span></button>').insertAfter(".k-grid-save-command");
@@ -249,6 +250,9 @@
             $('<button type="button" class="k-button k-button-md k-button-rectangle k-rounded-md k-button-solid k-button-solid-secondary" onclick="SaveOrUpdate(\'Save\')"><span class="k-button-text">Save</span></button>').insertAfter(".k-grid-save-command");
             //$('#approvedByDistrict').data("kendoDropDownList").enable(false);
             //$('#approvedByDistrictDate').data("kendoDatePicker").enable(false);
+
+            if(currentWorkOrderStatus == "APPROVED") //for approved work orders disable fields
+			    isEnabled = false;
         }
         else if ("@currentUserRole" == "USER") {
             if(isNew || (currentWorkOrderStatus != "APPROVED" && currentWorkOrderStatus != "RECEIVED" && currentWorkOrderStatus != "INSTALLED")){
@@ -259,6 +263,9 @@
             //$('#approvedByMaintenanceDate').data("kendoDatePicker").enable(false);
             //$('#approvedByDistrict').data("kendoDropDownList").enable(false);
             //$('#approvedByDistrictDate').data("kendoDatePicker").enable(false);
+
+            if(currentWorkOrderStatus == "APPROVED") //for approved work orders disable fields
+				isEnabled = false;            
         }
 
         if ($('#approvedByDistrict').data("kendoDropDownList").value().toString().length == 0) {
@@ -268,10 +275,10 @@
 
         $('#requestedByMaintenance').data("kendoDropDownList").enable(false);
         $('#requestedByMaintenanceDate').data("kendoDatePicker").enable(false);
-        $('#approvedByMaintenance').data("kendoDropDownList").enable(false);
-        $('#approvedByMaintenanceDate').data("kendoDatePicker").enable(false);
-        $('#approvedByDistrict').data("kendoDropDownList").enable(false);
-        $('#approvedByDistrictDate').data("kendoDatePicker").enable(false);
+        $('#approvedByMaintenance').data("kendoDropDownList").enable(isEnabled);
+        $('#approvedByMaintenanceDate').data("kendoDatePicker").enable(isEnabled);
+        $('#approvedByDistrict').data("kendoDropDownList").enable(isEnabled);
+        $('#approvedByDistrictDate').data("kendoDatePicker").enable(isEnabled);
     }
 
     // Function that sets if the popup will close or not when clicking the update and close buttons **************************************
