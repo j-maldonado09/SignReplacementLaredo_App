@@ -141,7 +141,7 @@
             // Check if edit button will be disabled
             // Column 6 is for status and column 8 is for edit and delete buttons
             if (this.cells.item(6).innerHTML == "CREATED") {
-                if ("@currentUserRole" == "ADMIN")
+                if ("@currentUserRole" == "ADMIN" || "@currentUserRole" == "USER")
                     this.cells.item(8).getElementsByClassName("k-grid-edit-command")[0].setAttribute("disabled", true);
             }
             else if (this.cells.item(6).innerHTML == "REQUESTED") {
