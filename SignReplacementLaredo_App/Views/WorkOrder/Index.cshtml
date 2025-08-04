@@ -316,62 +316,134 @@
         var dropdownVal;
         var currentDate = new Date(Date.now());
 
+        //disable fields when status is APPROVED for users and supervisors
+        var isEnabled = !(currentWorkOrderStatus === "APPROVED" &&
+        ("@currentUserRole" === "USER" || "@currentUserRole" === "SUPERVISOR"));
+
         dropdownVal = jsonResult[0].MaterialRequestedFromId;
-        $("#requestedFrom").data("kendoDropDownList").value(dropdownVal);
+        var requestedFromDropdown = $("#requestedFrom").data("kendoDropDownList");
+        if (requestedFromDropdown) {
+            requestedFromDropdown.value(dropdownVal);
+            requestedFromDropdown.enable(isEnabled);
+        }
 
         dropdownVal = jsonResult[0].MaterialRequestedById;
-        $("#requestedBy").data("kendoDropDownList").value(dropdownVal);
+        var requestedByDropdown = $("#requestedBy").data("kendoDropDownList");
+        if (requestedByDropdown) {
+            requestedByDropdown.value(dropdownVal);
+            requestedByDropdown.enable(isEnabled);
+        }
 
         dropdownVal = jsonResult[0].FY;
-        $("#year").data("kendoDropDownList").value(dropdownVal);
+        var yearDropdown = $("#year").data("kendoDropDownList");
+        if (yearDropdown) {
+            yearDropdown.value(dropdownVal);
+            yearDropdown.enable(isEnabled);
+        }
 
         dropdownVal = jsonResult[0].DepartmentId;
-        $("#department").data("kendoDropDownList").value(dropdownVal);
+        var deptDropdown = $("#department").data("kendoDropDownList");
+        if(deptDropdown){
+            deptDropdown.value(dropdownVal);
+            deptDropdown.enable(isEnabled);
+        }
 
         dropdownVal = jsonResult[0].AccountId;
-        $("#account").data("kendoDropDownList").value(dropdownVal);
+        var accountDropdown = $("#account").data("kendoDropDownList");
+        if (accountDropdown) {
+            accountDropdown.value(dropdownVal);
+            accountDropdown.enable(isEnabled);
+        }
 
         dropdownVal = jsonResult[0].FundId;
-        $("#fund").data("kendoDropDownList").value(dropdownVal);
+        var fundDropdown = $("#fund").data("kendoDropDownList");
+        if (fundDropdown) {
+            fundDropdown.value(dropdownVal);
+            fundDropdown.enable(isEnabled);
+        }
 
         dropdownVal = jsonResult[0].TaskId;
-        $("#task").data("kendoDropDownList").value(dropdownVal);
+        var taskDropdown = $("#task").data("kendoDropDownList");
+        if (taskDropdown) {
+            taskDropdown.value(dropdownVal);
+            taskDropdown.enable(isEnabled);
+        }
 
         dropdownVal = jsonResult[0].PCBusId;
-        $("#pcBus").data("kendoDropDownList").value(dropdownVal);
+        var pcBusDropdown = $("#pcBus").data("kendoDropDownList");
+        if (pcBusDropdown) {
+            pcBusDropdown.value(dropdownVal);
+            pcBusDropdown.enable(isEnabled);
+        }
 
         dropdownVal = jsonResult[0].ProjectId;
-        $("#project").data("kendoDropDownList").value(dropdownVal);
+        var projectDropdown = $("#project").data("kendoDropDownList");
+        if (projectDropdown) {
+            projectDropdown.value(dropdownVal);
+            projectDropdown.enable(isEnabled);
+        }
 
         dropdownVal = jsonResult[0].ActivityId;
-        $("#activity").data("kendoDropDownList").value(dropdownVal);
+        var activityDropdown = $("#activity").data("kendoDropDownList");
+        if (activityDropdown) {
+            activityDropdown.value(dropdownVal);
+            activityDropdown.enable(isEnabled);
+        }
 
         dropdownVal = jsonResult[0].ResTypeId;
-        $("#resType").data("kendoDropDownList").value(dropdownVal);
+        var resTypeDropdown = $("#resType").data("kendoDropDownList");
+        if (resTypeDropdown) {
+            resTypeDropdown.value(dropdownVal);
+            resTypeDropdown.enable(isEnabled);
+        }
 
         dropdownVal = jsonResult[0].RequestedByMaintenanceId;
-        $("#requestedByMaintenance").data("kendoDropDownList").value(dropdownVal);
+        var requestedByDropdown = $("#requestedByMaintenance").data("kendoDropDownList");
+        if (requestedByDropdown) {
+            requestedByDropdown.value(dropdownVal);
+            requestedByDropdown.enable(isEnabled);
+        }
 
         dropdownVal = jsonResult[0].ApprovedByMaintenanceId;
-        $("#approvedByMaintenance").data("kendoDropDownList").value(dropdownVal);
+        var approvedByDropdown = $("#approvedByMaintenance").data("kendoDropDownList");
+        if (approvedByDropdown) {
+            approvedByDropdown.value(dropdownVal);
+            approvedByDropdown.enable(isEnabled);
+        }
 
         dropdownVal = jsonResult[0].ApprovedByDistrictId;
-        $("#approvedByDistrict").data("kendoDropDownList").value(dropdownVal);
+        var approvedByDistrictDropdown = $("#approvedByDistrict").data("kendoDropDownList");
+        if (approvedByDistrictDropdown) {
+            approvedByDistrictDropdown.value(dropdownVal);
+            approvedByDistrictDropdown.enable(isEnabled);
+        }
 
         var dateParts = jsonResult[0].RequestedByMaintenanceDate.split('-');
         var date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-        $("#requestedByMaintenanceDate").data("kendoDatePicker").value(date);
+        var requestedByDatePicker = $("#requestedByMaintenanceDate").data("kendoDatePicker");
+        if (requestedByDatePicker) {
+            requestedByDatePicker.value(date);
+            requestedByDatePicker.enable(isEnabled);
+        }
 
         if (jsonResult[0].ApprovedByMaintenanceDate != null) {
             dateParts = jsonResult[0].ApprovedByMaintenanceDate.split('-');
             date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-            $("#approvedByMaintenanceDate").data("kendoDatePicker").value(date);
+            var approvedByMaintenanceDatePicker = $("#approvedByMaintenanceDate").data("kendoDatePicker");
+            if (approvedByMaintenanceDatePicker) {
+                approvedByMaintenanceDatePicker.value(date);
+                approvedByAreaEngineerDropdown.enable(isEnabled);
+            }
         }
 
         if (jsonResult[0].ApprovedByDistrictDate != null) {
             dateParts = jsonResult[0].ApprovedByDistrictDate.split('-');
             date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-            $("#approvedByDistrictDate").data("kendoDatePicker").value(date);
+            var approvedByDistrictDatePicker = $("#approvedByDistrictDate").data("kendoDatePicker");
+            if (approvedByDistrictDatePicker) {
+                approvedByDistrictDatePicker.value(date);
+                approvedByDistrictDropdown.enable(isEnabled);
+            }
         }
 
         if (jsonResult[0].SignReceivedDate != null) {
@@ -405,32 +477,60 @@
         var itemsNumber = jsonResult[0].Items.length;
         var controlVal;
 
+        //disable fields when status is APPROVED for users and supervisors
+        var isEnabled = !(currentWorkOrderStatus === "APPROVED" &&
+        ("@currentUserRole" === "USER" || "@currentUserRole" === "SUPERVISOR"));
+
         for (var i = 1; i <= itemsNumber; i++) {
             addSegment(jsonResult[0].Items[i - 1].SignImage);
         }
 
         for (var i = 1; i <= itemsNumber; i++) {
             controlVal = jsonResult[0].Items[i - 1].NIGP;
-            $("#nigp-" + i).data("kendoTextArea").value(controlVal);
+            var nigpTextArea = $("#nigp-" + i).data("kendoTextArea");
+            if (nigpTextArea) {
+                nigpTextArea.value(controlVal);
+                nigpTextArea.enable(isEnabled);
+            }
 
             controlVal = jsonResult[0].Items[i - 1].Quantity;
-            $("#quantity-" + i).data("kendoNumericTextBox").value(controlVal);
+            var quantityNumericTextBox = $("#quantity-" + i).data("kendoNumericTextBox");
+            if (quantityNumericTextBox) {
+                quantityNumericTextBox.value(controlVal);
+                quantityNumericTextBox.enable(isEnabled);
+            }
 
             // Kendo Upload control info should be initialized here.
             // However, Telerik requires that initialization must be done at the time the control is created.
             // This is all done in addSegment function.
 
             controlVal = jsonResult[0].Items[i - 1].Latitude;
-            $("#latitude-" + i).data("kendoTextArea").value(controlVal);
+            var latitudeTextArea = $("#latitude-" + i).data("kendoTextArea");
+            if (latitudeTextArea) {
+                latitudeTextArea.value(controlVal);
+                latitudeTextArea.enable(isEnabled);
+            }
 
             controlVal = jsonResult[0].Items[i - 1].Longitude;
-            $("#longitude-" + i).data("kendoTextArea").value(controlVal);
+            var longitudeTextArea = $("#longitude-" + i).data("kendoTextArea");
+            if (longitudeTextArea) {
+                longitudeTextArea.value(controlVal);
+                longitudeTextArea.enable(isEnabled);
+            }
 
             controlVal = jsonResult[0].Items[i - 1].Instructions;
-            $("#instructions-" + i).data("kendoTextArea").value(controlVal);
+            var instructionsTextArea = $("#instructions-" + i).data("kendoTextArea");
+            if (instructionsTextArea) {
+                instructionsTextArea.value(controlVal);
+                instructionsTextArea.enable(isEnabled);
+            }
 
             controlVal = jsonResult[0].Items[i - 1].SpecialInstructions;
-            $("#specialInstructions-" + i).data("kendoTextArea").value(controlVal);
+            var specialInstructionsTextArea = $("#specialInstructions-" + i).data("kendoTextArea");
+            if (specialInstructionsTextArea) {
+                specialInstructionsTextArea.value(controlVal);
+                specialInstructionsTextArea.enable(isEnabled);
+            }
         }
     }
 
@@ -582,6 +682,10 @@
         var image = [];
         var isReplacingFile = false;
 
+        //disable fields when status is APPROVED for users and supervisors
+        var isEnabled = !(currentWorkOrderStatus === "APPROVED" &&
+        ("@currentUserRole" === "USER" || "@currentUserRole" === "SUPERVISOR"));
+
         if (typeof imageName != "string")
             imageName = null;
 
@@ -589,7 +693,7 @@
             image = [{ name: imageName }];
 
         $('#left-' + cloneCount).append('<input id="files-' + cloneCount + '" name="files" type="file"/>');
-        $('#files-' + cloneCount).kendoUpload({
+        var uploadWidget = $('#files-' + cloneCount).kendoUpload({
             multiple: false,
             async: {
                 saveUrl: '/WorkOrder/SaveUploadedImage',
@@ -607,7 +711,10 @@
             remove: function (e) {
                 onFileRemoval(e, isReplacingFile);
             }
-        });
+        }).data("kendoUpload");
+        if (uploadWidget) {
+            uploadWidget.enable(isEnabled);
+        }
 
         // if length of array is greater than zero,
         // it means that an image already exists (an existing record is being edited)
