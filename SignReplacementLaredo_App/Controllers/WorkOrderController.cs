@@ -280,7 +280,8 @@ namespace SignDesignCorpusApp.Controllers
             return years;
         }
 
-        public async Task<IActionResult> SendMail()
+        [HttpPost]
+        public async Task<IActionResult> SendMail([FromBody] WorkOrderHelperModel workOrder)
         {
             var currentUser = await _userManager.GetUserAsync(HttpContext.User);
             var roles = _userManager.GetRolesAsync(currentUser).Result;

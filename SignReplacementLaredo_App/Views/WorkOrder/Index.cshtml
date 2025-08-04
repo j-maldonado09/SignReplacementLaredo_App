@@ -175,6 +175,7 @@
         cloneCountMax = cloneCountLimit;
 
         $(".k-grid-save-command").off().on("click", SaveOrUpdate);
+        $(".k-grid-save-command").hide();
         $(".k-grid-cancel-command").hide();
         //$(".k-window-titlebar-action.k-button.k-button-md.k-rounded-md.k-button-flat.k-button-flat-base.k-icon-button").removeClass("k-button-flat k-button-flat-base").addClass("k-button-solid k-button-solid-error");
         //$(".k-window-titlebar-action.k-button.k-button-md.k-rounded-md.k-icon-button.k-button-solid.k-button-solid-error.k-button-flat").removeClass("k-button-flat");
@@ -200,6 +201,7 @@
         }
         else {
             isNew = true;
+            currentWorkOrderStatus = ''; //reset current work order status when a new work order is opened
             addSegment(null);
 
             @{
@@ -231,15 +233,28 @@
     // Initialize the buttons that the current user (based on role) will see when opening the work order window ***********************************************
     function initializeControls() {
         if ("@currentUserRole" == "ADMIN") {
-            $('<button type="button" class="k-button k-button-md k-button-rectangle k-rounded-md k-button-solid k-button-solid-dark" onclick="CreatePDF()"><span class="k-icon k-i-file-pdf k-button-icon"></span><span class="k-button-text">Generate PDF</span></button>').insertAfter(".k-grid-save-command");
+            if(isNew || currentWorkOrderStatus == "DRAFT"){
+                $('<button type="button" class="k-button k-button-md k-button-rectangle k-rounded-md k-button-solid k-button-solid-primary" onclick="SaveOrUpdate(\'Submit\')"<span class="k-button-text">Save & Submit</span></button>').insertAfter(".k-grid-save-command");
+            }
+            else{
+                $('<button type="button" class="k-button k-button-md k-button-rectangle k-rounded-md k-button-solid k-button-solid-dark" onclick="CreatePDF()"><span class="k-icon k-i-file-pdf k-button-icon"></span><span class="k-button-text">Generate PDF</span></button>').insertAfter(".k-grid-save-command");
+                $('<button type="button" class="k-button k-button-md k-button-rectangle k-rounded-md k-button-solid k-button-solid-success" onclick="SaveOrUpdate(\'Submit\')"><span class="k-icon k-i-check k-button-icon"></span><span class="k-button-text">Approve</span></button>').insertAfter(".k-grid-save-command");
+            }
+            $('<button type="button" class="k-button k-button-md k-button-rectangle k-rounded-md k-button-solid k-button-solid-secondary" onclick="SaveOrUpdate(\'Save\')"><span class="k-button-text">Save</span></button>').insertAfter(".k-grid-save-command");
         }
         else if ("@currentUserRole" == "SUPERVISOR") {
-            $('<button type="button" class="k-button k-button-md k-button-rectangle k-rounded-md k-button-solid k-button-solid-dark" onclick="notifyButton()"><span class="k-icon k-i-bell k-button-icon"></span><span class="k-button-text">Notify</span></button>').insertAfter(".k-grid-save-command");
+            if(isNew || (currentWorkOrderStatus != "APPROVED" && currentWorkOrderStatus != "RECEIVED" && currentWorkOrderStatus != "INSTALLED")){
+                $('<button type="button" class="k-button k-button-md k-button-rectangle k-rounded-md k-button-solid k-button-solid-primary" onclick="SaveOrUpdate(\'Submit\')"<span class="k-button-text">Save & Submit</span></button>').insertAfter(".k-grid-save-command");
+            }
+            $('<button type="button" class="k-button k-button-md k-button-rectangle k-rounded-md k-button-solid k-button-solid-secondary" onclick="SaveOrUpdate(\'Save\')"><span class="k-button-text">Save</span></button>').insertAfter(".k-grid-save-command");
             //$('#approvedByDistrict').data("kendoDropDownList").enable(false);
             //$('#approvedByDistrictDate').data("kendoDatePicker").enable(false);
         }
         else if ("@currentUserRole" == "USER") {
-            $('<button type="button" class="k-button k-button-md k-button-rectangle k-rounded-md k-button-solid k-button-solid-dark" onclick="notifyButton()"><span class="k-icon k-i-bell k-button-icon"></span><span class="k-button-text">Notify</span></button>').insertAfter(".k-grid-save-command");
+            if(isNew || (currentWorkOrderStatus != "APPROVED" && currentWorkOrderStatus != "RECEIVED" && currentWorkOrderStatus != "INSTALLED")){
+                $('<button type="button" class="k-button k-button-md k-button-rectangle k-rounded-md k-button-solid k-button-solid-primary" onclick="SaveOrUpdate(\'Submit\')"<span class="k-button-text">Save & Submit</span></button>').insertAfter(".k-grid-save-command");
+            }
+            $('<button type="button" class="k-button k-button-md k-button-rectangle k-rounded-md k-button-solid k-button-solid-secondary" onclick="SaveOrUpdate(\'Save\')"><span class="k-button-text">Save</span></button>').insertAfter(".k-grid-save-command");
             //$('#approvedByMaintenance').data("kendoDropDownList").enable(false);
             //$('#approvedByMaintenanceDate').data("kendoDatePicker").enable(false);
             //$('#approvedByDistrict').data("kendoDropDownList").enable(false);
@@ -268,13 +283,14 @@
     }
 
     // Sends email when clicking on the notify button **************************************************
-    function notifyButton() {
+    function notifyButton(message, workOrder) {
         $.ajax({
-            type: 'GET',
+            type: 'POST',
             url: '/WorkOrder/SendMail',
             contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify(workOrder),
             success: function (result) {
-                fnShowMessage("Notification sent", "Success");
+                fnShowMessage(message + " and notification sent", "Success");
             },
             error: function (xhr, textStatus, errorThrown) {
                 fnShowMessage(xhr.responseText, "Error");
@@ -283,14 +299,14 @@
     }
 
     // Sets behaviour of popup when clicking save/update depending on if it is a new or an existing work order ****************************
-    function SaveOrUpdate() {
+    function SaveOrUpdate(btnType) {
         if (isNew) {
             closePopup = true;
-            SaveWorkOrder();
+            SaveWorkOrder(btnType);
         }
         else {
             closePopup = false;
-            UpdateWorkOrder();
+            UpdateWorkOrder(btnType);
         }
     }
 
@@ -722,8 +738,13 @@
     }
 
     // Function to save a new work order ************************************************************************************************************
-    function SaveWorkOrder() {
+    function SaveWorkOrder(btnType) {
         var workOrder = GetWorkOrderData();
+
+        if(btnType == "Save")
+            workOrder.Status = "DRAFT";
+        else
+            workOrder.Status = "CREATED";
 
         $.ajax({
             type: 'POST',
@@ -731,7 +752,11 @@
             contentType: 'application/json; charset=utf-8',
             data: JSON.stringify(workOrder),
             success: function (result) {
-                fnShowMessage("Work order was created", "Success");
+                const message = "Work order was created";
+                if(btnType == "Submit")
+                    notifyButton(message, workOrder);
+                else
+                    fnShowMessage(message, "Success");
                 RefreshGrid();
             },
             error: function (xhr, textStatus, errorThrown) {
@@ -741,15 +766,29 @@
     }
 
     // Function to save/update an existing work order **************************************************************************************************
-    function UpdateWorkOrder() {
+    function UpdateWorkOrder(btnType) {
         var workOrder = GetWorkOrderData();
+
+        //set status when Save & Submit button is clicked
+        if(btnType == "Submit"){
+            if(currentWorkOrderStatus == "DRAFT")
+                workOrder.Status = "CREATED";
+            else if(currentWorkOrderStatus == "CREATED")
+                workOrder.Status = "REQUESTED";
+            else
+                workOrder.Status =  "APPROVED";
+        }
         $.ajax({
             type: 'POST',
             url: '/WorkOrder/Update',
             contentType: 'application/json; charset=utf-8',
             data: JSON.stringify(workOrder),
             success: function (result) {
-                fnShowMessage("Information was updated", "Success");
+                const message = "Information was updated";
+                if(btnType == "Submit")
+                    notifyButton(message, workOrder);
+                else
+                    fnShowMessage(message, "Success");
                 RefreshGrid();
             },
             error: function (xhr, textStatus, errorThrown) {
