@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Telerik.SvgIcons;
 using System.Data;
+using System.Globalization;
 
 namespace SignDesignCorpusApp.Controllers
 {
@@ -264,6 +265,13 @@ namespace SignDesignCorpusApp.Controllers
             return maintenanceSections;
         }
 
+        // Read Maintenance section name **************************************************************************************************************
+        public string GetMaintenanceSectionName(int? id)
+        {
+            string result = _maintenanceSectionRepository.Read(id);
+            List<MaintenanceSection> maintenanceSections = JsonSerializer.Deserialize<List<MaintenanceSection>>(result).AsEnumerable().ToList();
+            return maintenanceSections[0].Name;
+        }
         public IActionResult GetSignShops([DataSourceRequest] DataSourceRequest request)
         {
             string result = _signShopRepository.Read();
@@ -303,10 +311,8 @@ namespace SignDesignCorpusApp.Controllers
             else if (status == "REQUESTED")
             {
                 applicationUsers = GetUsersInRoles("ADMIN").Result.ToList();
-              
-                //TextInfo textInfo = CultureInfo.CurrentCulture.TextInfo;
-                //string maintenanceSectionName = textInfo.ToTitleCase(GetMaintenanceSectionName(currentUser.MaintenanceSectionId).ToLower());
-                string maintenanceSectionName = currentUser.MaintenanceSectionId.ToString();
+                TextInfo textInfo = CultureInfo.CurrentCulture.TextInfo;
+                string maintenanceSectionName = textInfo.ToTitleCase(GetMaintenanceSectionName(currentUser.MaintenanceSectionId).ToLower());
                 htmlSubject = htmlSubject + " from " + maintenanceSectionName;
             }
             htmlSubject = htmlSubject + " for work order #" + workOrder.Id;
