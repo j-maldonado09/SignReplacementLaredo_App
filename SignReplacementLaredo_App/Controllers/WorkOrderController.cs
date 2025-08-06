@@ -323,9 +323,9 @@ namespace SignDesignCorpusApp.Controllers
             usersList = usersList.Remove(usersList.Length - 1, 1);
 
             string htmlMessage = "<h1>A new sign request has been updated</h1>" +
-                "<h3>Please login to your account to see updated request. To login, click <a href='(https://laredosignreplacement.azurewebsites.net/'>here</a>.</h3>";
+                "<h3>Please login to your account to see updated request. To login, click <a href='https://laredosignreplacement.azurewebsites.net/'>here</a>.</h3>";
 
-            await _eMailSender.SendEmailAsync(usersList, "Sign Request", htmlMessage);
+            await _eMailSender.SendEmailAsync(usersList, htmlSubject, htmlMessage);
             return View("Index");
         }
 
