@@ -109,7 +109,7 @@
     const cloneCountLimit = 5;     // limit of sign containers accepted by the application
     var workOrderId = 0;
     var isNew;
-    var closePopup = false;
+    var closePopup = true;
     var currentWorkOrderStatus = '';    // current work order status used when editing an existing work order
 
 
@@ -131,6 +131,7 @@
         grid.table.find("tr").each(function () {
             var dataItem = grid.dataItem(grid);
 
+            $("td:contains('DRAFT')").addClass("status-css-draft");
             $("td:contains('CREATED')").addClass("status-css-created");
             $("td:contains('REQUESTED')").addClass("status-css-requested");
             $("td:contains('APPROVED')").addClass("status-css-approved");
@@ -140,7 +141,7 @@
             // Check if edit button will be disabled
             // Column 6 is for status and column 8 is for edit and delete buttons
             if (this.cells.item(6).innerHTML == "CREATED") {
-                if ("@currentUserRole" == "ADMIN")
+                if ("@currentUserRole" == "ADMIN" || "@currentUserRole" == "USER")
                     this.cells.item(8).getElementsByClassName("k-grid-edit-command")[0].setAttribute("disabled", true);
             }
             else if (this.cells.item(6).innerHTML == "REQUESTED") {
@@ -174,6 +175,7 @@
         cloneCountMax = cloneCountLimit;
 
         $(".k-grid-save-command").off().on("click", SaveOrUpdate);
+        $(".k-grid-save-command").hide();
         $(".k-grid-cancel-command").hide();
         //$(".k-window-titlebar-action.k-button.k-button-md.k-rounded-md.k-button-flat.k-button-flat-base.k-icon-button").removeClass("k-button-flat k-button-flat-base").addClass("k-button-solid k-button-solid-error");
         //$(".k-window-titlebar-action.k-button.k-button-md.k-rounded-md.k-icon-button.k-button-solid.k-button-solid-error.k-button-flat").removeClass("k-button-flat");
@@ -199,6 +201,7 @@
         }
         else {
             isNew = true;
+            currentWorkOrderStatus = ''; //reset current work order status when a new work order is opened
             addSegment(null);
 
             @{
@@ -229,20 +232,40 @@
 
     // Initialize the buttons that the current user (based on role) will see when opening the work order window ***********************************************
     function initializeControls() {
+        var isEnabled = isNew || currentWorkOrderStatus === "DRAFT" ? false : true; //for new or draft work orders disable fields
         if ("@currentUserRole" == "ADMIN") {
-            $('<button type="button" class="k-button k-button-md k-button-rectangle k-rounded-md k-button-solid k-button-solid-dark" onclick="CreatePDF()"><span class="k-icon k-i-file-pdf k-button-icon"></span><span class="k-button-text">Generate PDF</span></button>').insertAfter(".k-grid-save-command");
+            if(isNew || currentWorkOrderStatus == "DRAFT"){
+                $('<button type="button" class="k-button k-button-md k-button-rectangle k-rounded-md k-button-solid k-button-solid-primary" onclick="SaveOrUpdate(\'Submit\')"<span class="k-button-text">Save & Submit</span></button>').insertAfter(".k-grid-save-command");
+            }
+            else{
+                $('<button type="button" class="k-button k-button-md k-button-rectangle k-rounded-md k-button-solid k-button-solid-dark" onclick="CreatePDF()"><span class="k-icon k-i-file-pdf k-button-icon"></span><span class="k-button-text">Generate PDF</span></button>').insertAfter(".k-grid-save-command");
+                $('<button type="button" class="k-button k-button-md k-button-rectangle k-rounded-md k-button-solid k-button-solid-success" onclick="SaveOrUpdate(\'Submit\')"><span class="k-icon k-i-check k-button-icon"></span><span class="k-button-text">Approve</span></button>').insertAfter(".k-grid-save-command");
+            }
+            $('<button type="button" class="k-button k-button-md k-button-rectangle k-rounded-md k-button-solid k-button-solid-secondary" onclick="SaveOrUpdate(\'Save\')"><span class="k-button-text">Save</span></button>').insertAfter(".k-grid-save-command");
         }
         else if ("@currentUserRole" == "SUPERVISOR") {
-            $('<button type="button" class="k-button k-button-md k-button-rectangle k-rounded-md k-button-solid k-button-solid-dark" onclick="notifyButton()"><span class="k-icon k-i-bell k-button-icon"></span><span class="k-button-text">Notify</span></button>').insertAfter(".k-grid-save-command");
+            if(isNew || (currentWorkOrderStatus != "APPROVED" && currentWorkOrderStatus != "RECEIVED" && currentWorkOrderStatus != "INSTALLED")){
+                $('<button type="button" class="k-button k-button-md k-button-rectangle k-rounded-md k-button-solid k-button-solid-primary" onclick="SaveOrUpdate(\'Submit\')"<span class="k-button-text">Save & Submit</span></button>').insertAfter(".k-grid-save-command");
+            }
+            $('<button type="button" class="k-button k-button-md k-button-rectangle k-rounded-md k-button-solid k-button-solid-secondary" onclick="SaveOrUpdate(\'Save\')"><span class="k-button-text">Save</span></button>').insertAfter(".k-grid-save-command");
             //$('#approvedByDistrict').data("kendoDropDownList").enable(false);
             //$('#approvedByDistrictDate').data("kendoDatePicker").enable(false);
+
+            if(currentWorkOrderStatus == "APPROVED") //for approved work orders disable fields
+			    isEnabled = false;
         }
         else if ("@currentUserRole" == "USER") {
-            $('<button type="button" class="k-button k-button-md k-button-rectangle k-rounded-md k-button-solid k-button-solid-dark" onclick="notifyButton()"><span class="k-icon k-i-bell k-button-icon"></span><span class="k-button-text">Notify</span></button>').insertAfter(".k-grid-save-command");
+            if(isNew || (currentWorkOrderStatus != "APPROVED" && currentWorkOrderStatus != "RECEIVED" && currentWorkOrderStatus != "INSTALLED")){
+                $('<button type="button" class="k-button k-button-md k-button-rectangle k-rounded-md k-button-solid k-button-solid-primary" onclick="SaveOrUpdate(\'Submit\')"<span class="k-button-text">Save & Submit</span></button>').insertAfter(".k-grid-save-command");
+            }
+            $('<button type="button" class="k-button k-button-md k-button-rectangle k-rounded-md k-button-solid k-button-solid-secondary" onclick="SaveOrUpdate(\'Save\')"><span class="k-button-text">Save</span></button>').insertAfter(".k-grid-save-command");
             //$('#approvedByMaintenance').data("kendoDropDownList").enable(false);
             //$('#approvedByMaintenanceDate').data("kendoDatePicker").enable(false);
             //$('#approvedByDistrict').data("kendoDropDownList").enable(false);
             //$('#approvedByDistrictDate').data("kendoDatePicker").enable(false);
+
+            if(currentWorkOrderStatus == "APPROVED") //for approved work orders disable fields
+				isEnabled = false;            
         }
 
         if ($('#approvedByDistrict').data("kendoDropDownList").value().toString().length == 0) {
@@ -252,10 +275,10 @@
 
         $('#requestedByMaintenance').data("kendoDropDownList").enable(false);
         $('#requestedByMaintenanceDate').data("kendoDatePicker").enable(false);
-        $('#approvedByMaintenance').data("kendoDropDownList").enable(false);
-        $('#approvedByMaintenanceDate').data("kendoDatePicker").enable(false);
-        $('#approvedByDistrict').data("kendoDropDownList").enable(false);
-        $('#approvedByDistrictDate').data("kendoDatePicker").enable(false);
+        $('#approvedByMaintenance').data("kendoDropDownList").enable(isEnabled);
+        $('#approvedByMaintenanceDate').data("kendoDatePicker").enable(isEnabled);
+        $('#approvedByDistrict').data("kendoDropDownList").enable(isEnabled);
+        $('#approvedByDistrictDate').data("kendoDatePicker").enable(isEnabled);
     }
 
     // Function that sets if the popup will close or not when clicking the update and close buttons **************************************
@@ -267,13 +290,14 @@
     }
 
     // Sends email when clicking on the notify button **************************************************
-    function notifyButton() {
+    function notifyButton(message, workOrder) {
         $.ajax({
-            type: 'GET',
+            type: 'POST',
             url: '/WorkOrder/SendMail',
             contentType: 'application/json; charset=utf-8',
+            data: JSON.stringify(workOrder),
             success: function (result) {
-                fnShowMessage("Notification sent", "Success");
+                fnShowMessage(message + " and notification sent", "Success");
             },
             error: function (xhr, textStatus, errorThrown) {
                 fnShowMessage(xhr.responseText, "Error");
@@ -282,14 +306,14 @@
     }
 
     // Sets behaviour of popup when clicking save/update depending on if it is a new or an existing work order ****************************
-    function SaveOrUpdate() {
+    function SaveOrUpdate(btnType) {
         if (isNew) {
-            closePopup = true;
-            SaveWorkOrder();
+            //closePopup = true;
+            SaveWorkOrder(btnType);
         }
         else {
-            closePopup = false;
-            UpdateWorkOrder();
+            //closePopup = false;
+            UpdateWorkOrder(btnType);
         }
     }
 
@@ -299,62 +323,137 @@
         var dropdownVal;
         var currentDate = new Date(Date.now());
 
+        //set status of the work order to global variable
+        currentWorkOrderStatus = jsonResult[0].Status;
+
+        //disable fields when status is APPROVED for users and supervisors
+        var isEnabled = !(currentWorkOrderStatus === "APPROVED" &&
+        ("@currentUserRole" === "USER" || "@currentUserRole" === "SUPERVISOR"));
+
         dropdownVal = jsonResult[0].MaterialRequestedFromId;
-        $("#requestedFrom").data("kendoDropDownList").value(dropdownVal);
+        var requestedFromDropdown = $("#requestedFrom").data("kendoDropDownList");
+        if (requestedFromDropdown) {
+            requestedFromDropdown.value(dropdownVal);
+            requestedFromDropdown.enable(isEnabled);
+        }
 
         dropdownVal = jsonResult[0].MaterialRequestedById;
-        $("#requestedBy").data("kendoDropDownList").value(dropdownVal);
+        var requestedByDropdown = $("#requestedBy").data("kendoDropDownList");
+        if (requestedByDropdown) {
+            requestedByDropdown.value(dropdownVal);
+            requestedByDropdown.enable(isEnabled);
+        }
 
         dropdownVal = jsonResult[0].FY;
-        $("#year").data("kendoDropDownList").value(dropdownVal);
+        var yearDropdown = $("#year").data("kendoDropDownList");
+        if (yearDropdown) {
+            yearDropdown.value(dropdownVal);
+            yearDropdown.enable(isEnabled);
+        }
 
         dropdownVal = jsonResult[0].DepartmentId;
-        $("#department").data("kendoDropDownList").value(dropdownVal);
+        var deptDropdown = $("#department").data("kendoDropDownList");
+        if(deptDropdown){
+            deptDropdown.value(dropdownVal);
+            deptDropdown.enable(isEnabled);
+        }
 
         dropdownVal = jsonResult[0].AccountId;
-        $("#account").data("kendoDropDownList").value(dropdownVal);
+        var accountDropdown = $("#account").data("kendoDropDownList");
+        if (accountDropdown) {
+            accountDropdown.value(dropdownVal);
+            accountDropdown.enable(isEnabled);
+        }
 
         dropdownVal = jsonResult[0].FundId;
-        $("#fund").data("kendoDropDownList").value(dropdownVal);
+        var fundDropdown = $("#fund").data("kendoDropDownList");
+        if (fundDropdown) {
+            fundDropdown.value(dropdownVal);
+            fundDropdown.enable(isEnabled);
+        }
 
         dropdownVal = jsonResult[0].TaskId;
-        $("#task").data("kendoDropDownList").value(dropdownVal);
+        var taskDropdown = $("#task").data("kendoDropDownList");
+        if (taskDropdown) {
+            taskDropdown.value(dropdownVal);
+            taskDropdown.enable(isEnabled);
+        }
 
         dropdownVal = jsonResult[0].PCBusId;
-        $("#pcBus").data("kendoDropDownList").value(dropdownVal);
+        var pcBusDropdown = $("#pcBus").data("kendoDropDownList");
+        if (pcBusDropdown) {
+            pcBusDropdown.value(dropdownVal);
+            pcBusDropdown.enable(isEnabled);
+        }
 
         dropdownVal = jsonResult[0].ProjectId;
-        $("#project").data("kendoDropDownList").value(dropdownVal);
+        var projectDropdown = $("#project").data("kendoDropDownList");
+        if (projectDropdown) {
+            projectDropdown.value(dropdownVal);
+            projectDropdown.enable(isEnabled);
+        }
 
         dropdownVal = jsonResult[0].ActivityId;
-        $("#activity").data("kendoDropDownList").value(dropdownVal);
+        var activityDropdown = $("#activity").data("kendoDropDownList");
+        if (activityDropdown) {
+            activityDropdown.value(dropdownVal);
+            activityDropdown.enable(isEnabled);
+        }
 
         dropdownVal = jsonResult[0].ResTypeId;
-        $("#resType").data("kendoDropDownList").value(dropdownVal);
+        var resTypeDropdown = $("#resType").data("kendoDropDownList");
+        if (resTypeDropdown) {
+            resTypeDropdown.value(dropdownVal);
+            resTypeDropdown.enable(isEnabled);
+        }
 
         dropdownVal = jsonResult[0].RequestedByMaintenanceId;
-        $("#requestedByMaintenance").data("kendoDropDownList").value(dropdownVal);
+        var requestedByDropdown = $("#requestedByMaintenance").data("kendoDropDownList");
+        if (requestedByDropdown) {
+            requestedByDropdown.value(dropdownVal);
+            requestedByDropdown.enable(isEnabled);
+        }
 
         dropdownVal = jsonResult[0].ApprovedByMaintenanceId;
-        $("#approvedByMaintenance").data("kendoDropDownList").value(dropdownVal);
+        var approvedByDropdown = $("#approvedByMaintenance").data("kendoDropDownList");
+        if (approvedByDropdown) {
+            approvedByDropdown.value(dropdownVal);
+            approvedByDropdown.enable(isEnabled);
+        }
 
         dropdownVal = jsonResult[0].ApprovedByDistrictId;
-        $("#approvedByDistrict").data("kendoDropDownList").value(dropdownVal);
+        var approvedByDistrictDropdown = $("#approvedByDistrict").data("kendoDropDownList");
+        if (approvedByDistrictDropdown) {
+            approvedByDistrictDropdown.value(dropdownVal);
+            approvedByDistrictDropdown.enable(isEnabled);
+        }
 
         var dateParts = jsonResult[0].RequestedByMaintenanceDate.split('-');
         var date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-        $("#requestedByMaintenanceDate").data("kendoDatePicker").value(date);
+        var requestedByDatePicker = $("#requestedByMaintenanceDate").data("kendoDatePicker");
+        if (requestedByDatePicker) {
+            requestedByDatePicker.value(date);
+            requestedByDatePicker.enable(isEnabled);
+        }
 
         if (jsonResult[0].ApprovedByMaintenanceDate != null) {
             dateParts = jsonResult[0].ApprovedByMaintenanceDate.split('-');
             date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-            $("#approvedByMaintenanceDate").data("kendoDatePicker").value(date);
+            var approvedByMaintenanceDatePicker = $("#approvedByMaintenanceDate").data("kendoDatePicker");
+            if (approvedByMaintenanceDatePicker) {
+                approvedByMaintenanceDatePicker.value(date);
+                approvedByDropdown.enable(isEnabled);
+            }
         }
 
         if (jsonResult[0].ApprovedByDistrictDate != null) {
             dateParts = jsonResult[0].ApprovedByDistrictDate.split('-');
             date = new Date(dateParts[0], dateParts[1] - 1, dateParts[2]);
-            $("#approvedByDistrictDate").data("kendoDatePicker").value(date);
+            var approvedByDistrictDatePicker = $("#approvedByDistrictDate").data("kendoDatePicker");
+            if (approvedByDistrictDatePicker) {
+                approvedByDistrictDatePicker.value(date);
+                approvedByDistrictDropdown.enable(isEnabled);
+            }
         }
 
         if (jsonResult[0].SignReceivedDate != null) {
@@ -388,32 +487,60 @@
         var itemsNumber = jsonResult[0].Items.length;
         var controlVal;
 
+        //disable fields when status is APPROVED for users and supervisors
+        var isEnabled = !(currentWorkOrderStatus === "APPROVED" &&
+        ("@currentUserRole" === "USER" || "@currentUserRole" === "SUPERVISOR"));
+
         for (var i = 1; i <= itemsNumber; i++) {
             addSegment(jsonResult[0].Items[i - 1].SignImage);
         }
 
         for (var i = 1; i <= itemsNumber; i++) {
             controlVal = jsonResult[0].Items[i - 1].NIGP;
-            $("#nigp-" + i).data("kendoTextArea").value(controlVal);
+            var nigpTextArea = $("#nigp-" + i).data("kendoTextArea");
+            if (nigpTextArea) {
+                nigpTextArea.value(controlVal);
+                nigpTextArea.enable(isEnabled);
+            }
 
             controlVal = jsonResult[0].Items[i - 1].Quantity;
-            $("#quantity-" + i).data("kendoNumericTextBox").value(controlVal);
+            var quantityNumericTextBox = $("#quantity-" + i).data("kendoNumericTextBox");
+            if (quantityNumericTextBox) {
+                quantityNumericTextBox.value(controlVal);
+                quantityNumericTextBox.enable(isEnabled);
+            }
 
             // Kendo Upload control info should be initialized here.
             // However, Telerik requires that initialization must be done at the time the control is created.
             // This is all done in addSegment function.
 
             controlVal = jsonResult[0].Items[i - 1].Latitude;
-            $("#latitude-" + i).data("kendoTextArea").value(controlVal);
+            var latitudeTextArea = $("#latitude-" + i).data("kendoTextArea");
+            if (latitudeTextArea) {
+                latitudeTextArea.value(controlVal);
+                latitudeTextArea.enable(isEnabled);
+            }
 
             controlVal = jsonResult[0].Items[i - 1].Longitude;
-            $("#longitude-" + i).data("kendoTextArea").value(controlVal);
+            var longitudeTextArea = $("#longitude-" + i).data("kendoTextArea");
+            if (longitudeTextArea) {
+                longitudeTextArea.value(controlVal);
+                longitudeTextArea.enable(isEnabled);
+            }
 
             controlVal = jsonResult[0].Items[i - 1].Instructions;
-            $("#instructions-" + i).data("kendoTextArea").value(controlVal);
+            var instructionsTextArea = $("#instructions-" + i).data("kendoTextArea");
+            if (instructionsTextArea) {
+                instructionsTextArea.value(controlVal);
+                instructionsTextArea.enable(isEnabled);
+            }
 
             controlVal = jsonResult[0].Items[i - 1].SpecialInstructions;
-            $("#specialInstructions-" + i).data("kendoTextArea").value(controlVal);
+            var specialInstructionsTextArea = $("#specialInstructions-" + i).data("kendoTextArea");
+            if (specialInstructionsTextArea) {
+                specialInstructionsTextArea.value(controlVal);
+                specialInstructionsTextArea.enable(isEnabled);
+            }
         }
     }
 
@@ -565,6 +692,10 @@
         var image = [];
         var isReplacingFile = false;
 
+        //disable fields when status is APPROVED for users and supervisors
+        var isEnabled = !(currentWorkOrderStatus === "APPROVED" &&
+        ("@currentUserRole" === "USER" || "@currentUserRole" === "SUPERVISOR"));
+
         if (typeof imageName != "string")
             imageName = null;
 
@@ -572,7 +703,7 @@
             image = [{ name: imageName }];
 
         $('#left-' + cloneCount).append('<input id="files-' + cloneCount + '" name="files" type="file"/>');
-        $('#files-' + cloneCount).kendoUpload({
+        var uploadWidget = $('#files-' + cloneCount).kendoUpload({
             multiple: false,
             async: {
                 saveUrl: '/WorkOrder/SaveUploadedImage',
@@ -590,7 +721,13 @@
             remove: function (e) {
                 onFileRemoval(e, isReplacingFile);
             }
-        });
+        }).data("kendoUpload");
+        if (uploadWidget) {
+            uploadWidget.enable(isEnabled);
+        }
+
+        //disable/enable add new sign button
+        $("[name='textButton']").data("kendoButton").enable(isEnabled);
 
         // if length of array is greater than zero,
         // it means that an image already exists (an existing record is being edited)
@@ -721,8 +858,13 @@
     }
 
     // Function to save a new work order ************************************************************************************************************
-    function SaveWorkOrder() {
-        var workOrder = GetWorkOrderData();
+    function SaveWorkOrder(btnType) {
+        var workOrder = GetWorkOrderData();        
+
+        if(btnType == "Save")
+            workOrder.Status = "DRAFT";
+        else
+            workOrder.Status = "CREATED";
 
         $.ajax({
             type: 'POST',
@@ -730,7 +872,11 @@
             contentType: 'application/json; charset=utf-8',
             data: JSON.stringify(workOrder),
             success: function (result) {
-                fnShowMessage("Work order was created", "Success");
+                const message = "Work order was created";
+                if(btnType == "Submit")
+                    notifyButton(message, result.Data[0]);
+                else
+                    fnShowMessage(message, "Success");
                 RefreshGrid();
             },
             error: function (xhr, textStatus, errorThrown) {
@@ -740,15 +886,29 @@
     }
 
     // Function to save/update an existing work order **************************************************************************************************
-    function UpdateWorkOrder() {
+    function UpdateWorkOrder(btnType) {
         var workOrder = GetWorkOrderData();
+
+        //set status when Save & Submit button is clicked
+        if(btnType == "Submit"){
+            if(currentWorkOrderStatus == "DRAFT")
+                workOrder.Status = "CREATED";
+            else if(currentWorkOrderStatus == "CREATED")
+                workOrder.Status = "REQUESTED";
+            else
+                workOrder.Status =  "APPROVED";
+        }
         $.ajax({
             type: 'POST',
             url: '/WorkOrder/Update',
             contentType: 'application/json; charset=utf-8',
             data: JSON.stringify(workOrder),
             success: function (result) {
-                fnShowMessage("Information was updated", "Success");
+                const message = "Information was updated";
+                if(btnType == "Submit")
+                    notifyButton(message, result.Data[0]);
+                else
+                    fnShowMessage(message, "Success");
                 RefreshGrid();
             },
             error: function (xhr, textStatus, errorThrown) {

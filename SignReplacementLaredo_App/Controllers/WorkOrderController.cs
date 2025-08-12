@@ -14,6 +14,7 @@ using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Authorization;
 using Telerik.SvgIcons;
 using System.Data;
+using System.Globalization;
 
 namespace SignDesignCorpusApp.Controllers
 {
@@ -100,7 +101,8 @@ namespace SignDesignCorpusApp.Controllers
         [HttpPost]
         public IActionResult Create([DataSourceRequest] DataSourceRequest request, [FromBody] WorkOrderHelperModel workOrder)
         {
-            _workOrderRepository.Create(workOrder);
+            int workOrderId = _workOrderRepository.Create(workOrder);
+            workOrder.Id = workOrderId;
             _workOrderRepository.DisposeDBObjects();
             return Json(new[] { workOrder }.ToDataSourceResult(request, ModelState));
         }
@@ -264,6 +266,13 @@ namespace SignDesignCorpusApp.Controllers
             return maintenanceSections;
         }
 
+        // Read Maintenance section name **************************************************************************************************************
+        public string GetMaintenanceSectionName(int? id)
+        {
+            string result = _maintenanceSectionRepository.Read(id);
+            List<MaintenanceSection> maintenanceSections = JsonSerializer.Deserialize<List<MaintenanceSection>>(result).AsEnumerable().ToList();
+            return maintenanceSections[0].Name;
+        }
         public IActionResult GetSignShops([DataSourceRequest] DataSourceRequest request)
         {
             string result = _signShopRepository.Read();
@@ -280,28 +289,34 @@ namespace SignDesignCorpusApp.Controllers
             return years;
         }
 
-        public async Task<IActionResult> SendMail()
+        [HttpPost]
+        public async Task<IActionResult> SendMail([FromBody] WorkOrderHelperModel workOrder)
         {
             var currentUser = await _userManager.GetUserAsync(HttpContext.User);
             var roles = _userManager.GetRolesAsync(currentUser).Result;
             List<ApplicationUser> applicationUsers = new List<ApplicationUser>();
             string usersList = "";
-
-            switch (roles[0])
+            string status = workOrder.Status;
+            string currentUserRole = _userManager.GetRolesAsync(currentUser).Result[0];
+            var htmlSubject = "Sign Request";
+            if (status == "CREATED" || status == "APPROVED")
             {
-                case "USER":
-                    applicationUsers = GetUsersInRoles("SUPERVISOR").Result.ToList();
-
-                    //filter supervisor that belongs to user's maintenance section
-                    applicationUsers = applicationUsers
-                        .Where(user => user.MaintenanceSectionId == currentUser.MaintenanceSectionId)
+                applicationUsers = GetUsersInRoles("SUPERVISOR").Result.ToList();
+                var maintenanceSectionId = currentUser.MaintenanceSectionId;
+                if (currentUserRole == "ADMIN")
+                    maintenanceSectionId = workOrder.MaterialRequestedById;
+                applicationUsers = applicationUsers
+                        .Where(user => user.MaintenanceSectionId == maintenanceSectionId)
                         .ToList();
-                    break;
-                case "SUPERVISOR":
-                    applicationUsers = GetUsersInRoles("ADMIN").Result.ToList();
-                    break;
             }
-
+            else if (status == "REQUESTED")
+            {
+                applicationUsers = GetUsersInRoles("ADMIN").Result.ToList();
+                TextInfo textInfo = CultureInfo.CurrentCulture.TextInfo;
+                string maintenanceSectionName = textInfo.ToTitleCase(GetMaintenanceSectionName(currentUser.MaintenanceSectionId).ToLower());
+                htmlSubject = htmlSubject + " from " + maintenanceSectionName;
+            }
+            htmlSubject = htmlSubject + " for work order #" + workOrder.Id;
             foreach (ApplicationUser user in applicationUsers)
             {
                 usersList += user.Email + ";";
@@ -309,9 +324,9 @@ namespace SignDesignCorpusApp.Controllers
             usersList = usersList.Remove(usersList.Length - 1, 1);
 
             string htmlMessage = "<h1>A new sign request has been updated</h1>" +
-                "<h3>Please login to your account to see updated request</h3>";
+                "<h3>Please login to your account to see updated request. To login, click <a href='https://laredosignreplacement.azurewebsites.net/'>here</a>.</h3>";
 
-            await _eMailSender.SendEmailAsync(usersList, "Sign Request", htmlMessage);
+            await _eMailSender.SendEmailAsync(usersList, htmlSubject, htmlMessage);
             return View("Index");
         }
 
